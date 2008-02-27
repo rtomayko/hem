@@ -1,0 +1,62 @@
+# $Id: Makefile.in,v 1.3 2006/07/13 14:53:44 harding Exp $
+#
+# @configure_input@
+
+VER=		1.4a
+
+SSH=		@path_ssh@
+
+prefix=		@prefix@
+exec_prefix=	@exec_prefix@
+bindir=		@bindir@
+datadir=	@datadir@
+mandir=		@mandir@
+
+SRCDIR=		@srcdir@
+VPATH=		@srcdir@
+
+CC=		@CC@
+CFLAGS=		@CFLAGS@ -DVER=\"$(VER)\" -DSSH_PATH=\"$(SSH)\"
+CPPFLAGS=	@CPPFLAGS@
+
+OFILES=		autossh.o
+
+LD=		@LD@
+LDFLAGS=	@LDFLAGS@
+LIBS=		@LIBS@
+
+TARGET=		autossh
+
+all:		$(TARGET)
+
+
+$(TARGET):	$(OFILES)
+		$(CC) $(CPPFLAGS) -o $(TARGET) $(OFILES) $(LIBS)
+
+clean:
+		- /bin/rm -f *.o *.a *.core *~
+
+allclean:	clean
+		- /bin/rm -f $(TARGET)
+
+distclean:	allclean
+		- /bin/rm -f config.log config.cache config.status config.h
+		- /bin/rm -rf autom4te.cache
+		- /bin/rm -f Makefile
+
+install:	$(TARGET)
+		mkdir -p -m 755 $(bindir)
+		mkdir -p -m 755 $(prefix)/share/doc/autossh
+		mkdir -p -m 755 $(datadir)/examples/autossh
+		mkdir -p -m 755 $(mandir)/man1
+		cp $(TARGET) $(bindir)
+		cp CHANGES README $(datadir)/doc/autossh
+		cp autossh.host	$(datadir)/examples/autossh
+		cp rscreen $(datadir)/examples/autossh
+		cp autossh.1 $(mandir)/man1
+		chmod 755 $(bindir)/$(TARGET)
+		chmod 644 $(datadir)/doc/autossh/CHANGES
+		chmod 644 $(datadir)/doc/autossh/README
+		chmod 644 $(datadir)/examples/autossh/autossh.host 
+		chmod 644 $(datadir)/examples/autossh/rscreen
+		chmod 644 $(mandir)/man1/autossh.1 
