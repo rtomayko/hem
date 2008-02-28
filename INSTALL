@@ -1,0 +1,25 @@
+
+
+                            Hem INSTALL
+
+For most systems, you should be able to just do `make` then `make
+install`. By default, the program is installed to `$HOME/bin`. You
+can override the various install locations by passing them along the
+`make` command line. For a global install, try:
+
+        $ make prefix=/usr/local            ;# as yourself
+        # make prefix=/usr/local install    ;# as root
+
+After installing, reference the hem(1) manpages or dive right in
+with:
+
+        $ hem init --help
+
+You can also use `hem` from its working directory without
+installing. First, run `make` and then setup your PATH as follows:
+
+        $ PATH=`pwd`:$PATH
+        $ export PATH
+
+See the README file included in this distribution and the hem(1)
+manpage for information on hem usage.

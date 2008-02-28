@@ -1,0 +1,24 @@
+
+         Hem - persistent ssh connection and tunnel manager
+
+Hem manages multiple background SSH connections using an `ifconfig` /
+`rc` style interface. It is most often used to setup persistent /
+long-running port tunnels and control master connections. Hem monitors
+connection upedness and can automatically bounce downed connection.
+
+Hem is Free Software covered by the "New and Simplified BSD License". It
+was originally written by Ryan Tomayko <rtomayko@gmail.com>.
+
+Please read the file INSTALL for installation instructions. Hem should
+run on most flavors of Unix and GNU that include a posix compatible sh
+interpreter. Hem currently requires OpenSSH's ssh(1) as well as Carson
+Harding's autossh(1).
+
+More information on Hem is accessible from http://tomayko.com/src/hem/
+including full documentation, examples, and distributables. There is
+also project tracking resources at http://github.com/rtomayko/hem/
+
+See Also:
+
+  * OpenSSH: http://www.openssh.com/
+  * autossh: http://www.harding.motd.ca/autossh/

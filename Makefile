@@ -1,52 +1,144 @@
-PREFIX = /usr/local
-BINDIR = $(PREFIX)/bin
-NAME = hem
-VERS = 0.1
+# The default target...
+all::
 
-install = install
-mkdir = mkdir -p
-tar = gnutar
+# Modify these on the command line or directly in this file to install things
+# somewhere else.
+prefix = $(HOME)
+bindir = $(prefix)/bin
+libexecdir = $(bindir)
+sharedir = $(prefix)/share
+mandir = $(sharedir)/man
+docdir = $(sharedir)/doc/hem
 
-BINFILES = $(NAME) $(NAME)-init $(NAME)-info $(NAME)-up \
-		   $(NAME)-down $(NAME)-bounce $(NAME)-status $(NAME)-config.sh
-DOCFILES = doc/$(NAME).1.txt
-XMLFILES = doc/$(NAME).1.xml
-MANFILES = man/$(NAME).1
-HTMLFILES = doc/$(NAME).1.html
-CLEAN = $(MANFILES) $(HTMLFILES) $(XMLFILES) man
-DISTCLEAN = $(XMLFILES)
-DISTFILES = $(BINFILES) $(DOCFILES) $(MANFILES) $(HTMLFILES)
+export prefix bindir libexecdir sharedir mandir htmldir
 
-.PHONY : all clean dist check-sh-syntax doc
+RM = rm -f
+TAR = tar
+FIND = find
+INSTALL = install
+SHELL_PATH = /bin/sh
 
-all: $(BINFILES) $(MANFILES) $(HTMLFILES)
+# ---- END OF CONFIGURATION ----
 
-dist: dist/$(NAME)-$(VERS).tar.gz
+# Figure out a bit about the system ...
+uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 
-dist/$(NAME)-$(VERS).tar.gz: $(DISTFILES)
-	$(mkdir) dist
-	$(tar) cvzf $@ $(DISTFILES)
+# Read version in from VERSION file.
+HEM_VERSION := $(shell cat VERSION)
 
-check-sh-syntax: $(BINFILES)
-	for f in $(BINFILES) ; do bash -t $f ; done
+# ---- PLATFORM TWEAKS ----
 
-doc: $(MANFILES) $(HTMLFILES)
+ifeq ($(uname_S),FreeBSD)
+	BASH = $(shell test -x /usr/local/bin/bash && echo "/usr/local/bin/bash")
+endif
 
-manpages: man $(MANFILES)
+ifeq ($(uname_S),Darwin)
+	BASH = /bin/sh
+	SHELL_PATH = $(BASH)
+endif
 
-man:
-	mkdir -p man
+ifeq ($(uname_S),SunOS)
+	BASH = /bin/bash
+	SHELL_PATH = $(BASH)
+	INSTALL = ginstall
+	TAR = gtar
+endif
 
-$(MANFILES): man/%.1: doc/%.1.txt man
-	a2x -d manpage -f manpage -D man $<
+ifeq ($(uname_S),Linux)
+endif
 
-$(HTMLFILES): %.1.html: %.1.txt
-	asciidoc -d manpage $<
+# Figure out if we have a bash -t capability to check script syntax.
+ifndef SHELL_T
+  ifdef BASH
+    SHELL_T = $(BASH) -t
+  else
+    ifeq ($(shell test $(SHELL_PATH) -t -c ':' 2>/dev/null && echo 't'),t)
+      SHELL_T = $(SHELL_PATH) -t
+    else
+      SHELL_T = true
+    endif
+  endif
+endif
+
+ifneq ($(findstring $(MAKEFLAGS),s),s)
+ifndef V
+	QUIET_SH       = @echo '   ' SH $@;
+	QUIET_SUBDIR0  = +@subdir=
+	QUIET_SUBDIR1  = ;$(NO_SUBDIR) echo '   ' SUBDIR $$subdir; \
+			 $(MAKE) $(PRINT_DIR) -C $$subdir
+	export V
+	export QUIET_GEN
+endif
+endif
+
+
+
+# These are all currently installed to $(bindir) but the hem-XXX scripts will
+# probably move to a libexec directory, eventually.
+SCRIPT_SH = \
+	hem-bounce.sh \
+	hem-config.sh \
+	hem-down.sh \
+	hem-info.sh \
+	hem-init.sh \
+	hem-status.sh \
+	hem-up.sh
+
+SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH))
+
+PROGRAM_SH = hem.sh
+PROGRAMS = $(patsubst %.sh,%,$(PROGRAM_SH))
+
+all:: $(SCRIPTS)
+
+# Build all hem-XXX scripts by substituting build time variables and
+#
+$(SCRIPTS) $(PROGRAMS): % : %.sh
+	$(QUIET_SH)$(RM) $@ $@+ && \
+	sed -e '1s|#!.*/sh|#!$(SHELL_PATH)|' \
+	    -e 's|@@HEM_VERSION@@|$(HEM_VERSION)|g' \
+	    -e 's|@@HEM_EXEC_DIR@@|$(libexecdir)|g' \
+	    $@.sh >$@+ && \
+	chmod +x $@+ && \
+	$(SHELL_T) $@+ && \
+	mv $@+ $@
+
+# ---- INSTALL TARGETS ----
+
+DOCFILES = README INSTALL VERSION
+
+install: all
+	$(INSTALL) -d -m 755 '$(DESTDIR)$(bindir)'
+	$(INSTALL) -d -m 755 '$(DESTDIR)$(libexecdir)'
+	$(INSTALL) $(SCRIPTS) '$(DESTDIR)$(libexecdir)'
+	$(INSTALL) $(PROGRAMS) '$(DESTDIR)$(bindir)'
+	$(INSTALL) -d -m 755 '$(DESTDIR)$(docdir)'
+	$(INSTALL) $(DOCFILES) '$(DESTDIR)$(docdir)'
+
+# ---- PACKAGING AND DIST TARGETS ----
+
+DIST_TAR_GZ = hem-$(HEM_VERSION).tar.gz
+
+DISTFILES = \
+	$(SCRIPT_SH) $(PROGRAM_SH) \
+	$(DOCFILES) \
+	Makefile
+
+$(DIST_TAR_GZ): $(SCRIPTS)
+	$(TAR) czf $@ $(DISTFILES)
+
+dist: $(DIST_TAR_GZ)
+
+
+# ---- MISC TARGETS ----
 
 clean:
-	rm -rf $(CLEAN)
+	$(RM) $(SCRIPTS)
+	$(RM) $(patsubst %.sh,%+,$(SCRIPT_SH))
+	$(RM) $(DIST_TAR_GZ)
 
-distclean:
-	rm -rf $(DISTCLEAN)
+.PHONY : all clean dist install
 
 FORCE:
+
+# vim: set ts=8
