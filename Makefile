@@ -77,10 +77,10 @@ endif
 # probably move to a libexec directory, eventually.
 SCRIPT_SH = \
 	hem-bounce.sh \
-	hem-config.sh \
 	hem-down.sh \
 	hem-info.sh \
 	hem-init.sh \
+	hem-sh-setup.sh \
 	hem-status.sh \
 	hem-up.sh
 

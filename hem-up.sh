@@ -8,7 +8,7 @@ LONG_USAGE="Bring <profile> connection up.
                         error messages come up on the console."
 
 # Bring in basic sh configuration
-. hem-config
+. hem-sh-setup
 need_config
 
 # Parse arguments

@@ -21,7 +21,7 @@ With no OPTIONS, write the entire profile configuration to standard
 output in a format suitable for eval'ing into a shell.
 "
 
-. hem-config
+. hem-sh-setup
 need_config
 
 vars=

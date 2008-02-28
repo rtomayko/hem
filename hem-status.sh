@@ -10,7 +10,7 @@ LONG_USAGE="Show connection status information for <profile>.
 When neither --check or --pid are specified, output a description of
 the connection status. The format varies based on the connection state."
 
-. hem-config
+. hem-sh-setup
 need_config
 
 # Parse arguments

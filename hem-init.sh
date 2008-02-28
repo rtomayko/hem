@@ -6,7 +6,7 @@ LONG_USAGE="Initialize a template configuration directory structure in <dir>.
   -e               Open an editor on the config file after creating
   -f               Force overwrite existing configuration"
 
-. hem-config
+. hem-sh-setup
 
 set -e
 
