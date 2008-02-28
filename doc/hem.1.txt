@@ -1,0 +1,74 @@
+HEM(1)
+======
+Ryan Tomayko <rtomayko@gmail.com>
+
+
+NAME
+----
+hem - persistent ssh(1) connection and tunnel manager.
+
+
+SYNOPSIS
+--------
+'hem' [<opt>] <command> [<opt>] [<profile>...]
+
+'hem' init [-e] [-f]
+
+'hem' info [<opt>]
+
+'hem' up [<profile>...]
+
+'hem' down [-<sig>] [<profile>...]
+
+'hem' bounce [<profile>...]
+
+'hem' status [-p] [-c] [<profile>...]
+
+
+DESCRIPTION
+-----------
+The hem(1) program manages multiple persistent ssh connections using an
+'ifconfig' / 'rc' style interface.
+
+
+OPTIONS
+-------
+-q, --quiet::
+        Do not write any non-critical output to 'stdout' / 'stderr'. By
+        default, hem(1)
+
+-c, --config <file>::
+        Load configuration from '<file>' instead of the default configuration
+        file location.
+
+-h, --help[=TOPIC]::
+        Print help TOPIC. '--help topics' will print a list of help
+        topics, `--help syntax` summarizes AsciiDoc syntax, `--help
+        manpage` prints the AsciiDoc manpage.
+
+--version::
+        Print program version number.
+
+
+BUGS
+----
+None.
+
+
+AUTHOR
+------
+Ryan Tomayko <mailto:rtomayko@gmail.com[]>
+
+
+RESOURCES
+---------
+Web Site: http://tomayko.com/src/hem/
+
+Project Page: http://github.com/rtomayko/hem/
+
+
+COPYING
+-------
+Copyright \(C) 2008, Ryan Tomayko. Free use of this software is
+granted under the terms of the New and Simplified BSD License.
+
