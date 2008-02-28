@@ -4,7 +4,7 @@ USAGE="<profile>"
 LONG_USAGE="Restart the SSH connection for <profile>"
 
 # Bring in basic sh configuration
-. hem-config.sh
+. hem-config
 need_config
 
 # Grab profile or die

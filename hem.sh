@@ -38,7 +38,7 @@ Global Options:
 
 # Bring in shell helpers
 MANUAL_ARGS=1
-. hem-config.sh
+. hem-config
 
 quiet=
 command=

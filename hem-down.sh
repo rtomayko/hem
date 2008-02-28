@@ -7,7 +7,7 @@ When <sig> is given, kill the process with the signal specified. The default
 signal is -TERM."
 
 # Bring in basic sh configuration
-. hem-config.sh
+. hem-config
 need_config
 
 # Parse arguments
