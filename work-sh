@@ -1,0 +1,27 @@
+#!/bin/sh
+
+test $(basename $0) = 'work-sh' &&
+cat <<-EOF && exit 1
+Source this file into your shell after changing into the Hem working
+to get the hem commands on your path:
+
+    $ cd $(dirname $0)
+    $ . work-sh
+    $ cd ~
+    $ type hem
+    hem is $(dirname $0)/hem
+
+(You will need to source the work-sh script for each shell environment.)
+EOF
+
+if test ! -f $(dirname $0)/VERSION
+then
+    echo "This doesn't look like a Hem working directory..."
+else
+    test -z "$(echo $PATH | grep -F "$(pwd)")" && {
+        PATH="$(pwd):$PATH"
+        export PATH
+        echo "Hem $(cat VERSION) should now be active for the current shell environment."
+    } ||
+    echo "$(pwd) already on PATH"
+fi
