@@ -111,8 +111,17 @@ fi
 
 # Okay, all profiles check out. We loop through each and execute the
 # appropriate command:
+set +e
 command="$0-$command"
+failures=0
 for profile in $profiles ;
 do
-    "$command" $command_args "$profile"
+    if ! "$command" $command_args "$profile" ; then
+        failures=$(expr $failures + 1)
+    fi
 done
+
+test $failures -gt 0 &&
+die "multiple ($failures) failures."
+
+exit 0
