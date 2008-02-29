@@ -41,13 +41,10 @@ OPTIONS
         Load configuration from '<file>' instead of the default configuration
         file location.
 
--h, --help[=TOPIC]::
+--help::
         Print help TOPIC. '--help topics' will print a list of help
         topics, `--help syntax` summarizes AsciiDoc syntax, `--help
         manpage` prints the AsciiDoc manpage.
-
---version::
-        Print program version number.
 
 
 BUGS
@@ -71,4 +68,3 @@ COPYING
 -------
 Copyright \(C) 2008, Ryan Tomayko. Free use of this software is
 granted under the terms of the New and Simplified BSD License.
-
