@@ -48,7 +48,6 @@ profile_name="$1"
 shift
 
 test -n "$1" && usage
-profile_check $profile_name
 profile_with $profile_name
 
 if [ -n "$vars" ] ; then
