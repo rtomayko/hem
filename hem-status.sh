@@ -61,11 +61,7 @@ if [ $output_pid ] ; then
     test $pid_ok = y &&
     echo $pid
 elif [ ! $check_mode ] ; then
-    case "$process_status" in
-        up|stale|wtf) echo "$profile_name: up (pid: $pid)" ;;
-        down)         echo "$profile_name: down" ;;
-        *)            echo "$profile_name: unknown" ;;
-    esac
+    printf "%-45s%-10s%6s\n" "$profile_name" "$process_status" "$pid"
 fi
 
 # If --check was given, exit accordingly.
