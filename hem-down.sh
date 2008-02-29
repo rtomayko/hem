@@ -4,7 +4,11 @@ USAGE="[<signal>] <profile>"
 LONG_USAGE="Bring <profile> connection down.
 
 When <sig> is given, kill the process with the signal specified. The default
-signal is -TERM."
+signal is -TERM.
+
+This command exits with 1 when the command does not come down
+properly, 2 when the connection is already is already down, and 0 if
+sucessful."
 
 # Bring in basic sh configuration
 . hem-sh-setup
@@ -35,8 +39,10 @@ profile_with $profile_name
 
 # Check that connection isn't already running.
 pid=$("$execdir/hem-status" --pid $profile_name)
-[ -z "$pid" ] &&
-die "$profile_name isn't running."
+if [ -z "$pid" ] ; then
+    info "$profile_name is already down"
+    exit 2
+fi
 
 info "taking down: $profile_name (pid: $pid) with $sig"
 log "taking down $profile_name (pid: $pid) with $sig"

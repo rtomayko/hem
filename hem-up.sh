@@ -5,7 +5,11 @@ LONG_USAGE="Bring <profile> connection up.
 
   -f, --front           Don't go to background. This is typically only
                         useful for debugging configuration problems since
-                        error messages come up on the console."
+                        error messages come up on the console.
+
+This command exits with 1 when the command does not come up
+properly, 2 when the connection is already is already up, and 0 if
+sucessful."
 
 # Bring in basic sh configuration
 . hem-sh-setup
@@ -35,8 +39,10 @@ test $# -gt 0 && usage
 profile_with $profile_name
 
 # Check that connection isn't already running.
-$execdir/hem-status --check $profile_name &&
-die "$profile_name is already up"
+if $execdir/hem-status --check $profile_name ; then
+    info "$profile_name is already up"
+    exit 2
+fi
 
 info "bringing up: $profile_name"
 log "bringing up $profile_name"

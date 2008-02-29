@@ -93,6 +93,7 @@ fi
 need_config
 
 # Figure out what profiles we're operating on..
+group_operation=
 if [ $# -gt 0 ] ; then
     profiles="$@"
     for profile in $profiles
@@ -102,6 +103,7 @@ if [ $# -gt 0 ] ; then
         die "Bad profile: $profile ($(tildize "$profile_file"))"
     done
 else
+    group_operation=1
     # No profile names were provided. We need to run the commands on
     # all of them.
     profiles=$(
@@ -124,9 +126,12 @@ if ! type "$full_command" >/dev/null 2>&1 ; then
 fi
 
 failures=0
+result=
 for profile in $profiles ;
 do
     if ! "$full_command" $command_args "$profile" ; then
+        result=$?
+        test $result = 1 &&
         failures=$(expr $failures + 1)
     fi
 done
