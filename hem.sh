@@ -93,16 +93,20 @@ if [ $# -gt 0 ] ; then
     profiles="$@"
     for profile in $profiles
     do
-        test -r "$profile_dir"/"$profile.conf" ||
-        die "no such profile: $profile $(tildize "$profile_dir"/"$profile.conf") not found)"
+        profile_file="$(profile_config_file $profile)"
+        profile_okay $profile_file ||
+        die "Bad profile: $profile ($(tildize "$profile_file"))"
     done
 else
     # No profile names were provided. We need to run the commands on
     # all of them.
     profiles=$(
-      (cd "$profile_dir" && /bin/ls -1 *.conf 2>/dev/null) |
-      sed 's/\.conf$//'
+      (cd "$profile_dir" && echo * | grep -v '~$')
     )
+    # Exit if no profiles are available.
+    test -z "$profiles" &&
+    die "No connection profiles."
+    # TODO: info message describing how to setup first profile.
 fi
 
 # Okay, all profiles check out. We loop through each and execute the

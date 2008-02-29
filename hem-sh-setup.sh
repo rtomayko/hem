@@ -16,7 +16,7 @@ quiet=${quiet:-}
 USAGE="$USAGE
 $LONG_USAGE
 
-Copyright (c) 2008, Ryan Tomayko <r@tomayko.com>."
+Copyright (c) 2008, Ryan Tomayko <rtomayko@gmail.com>."
 
 # Quit with non-zero exit code.
 die() {
@@ -59,7 +59,7 @@ tildize() {
 }
 
 # Don't ever run this file directly.
-test "$progname" = "hem-config.sh" &&
+test "$progname" = "hem-sh-setup" &&
 die "Try: hem --help"
 
 # Sourcing scripts can set MANUAL_ARGS to have the automatic
@@ -129,13 +129,31 @@ need_config() {
 
 # Profile Helpers =============================================================
 
+# Outputs the path to a profile file given a profile name. No
+# attempt is made to check that the profile exists or is syntactally valid.
+profile_config_file() {
+    if [ "$(expr "$1" : '\/')" = 1 ] ; then
+        echo "$1"
+    else
+        echo "$profile_dir"/"$1"
+    fi
+    return 0
+}
+
+# Checks that a profile exists and is syntactically valid.
+profile_okay() {
+    test -r "$(profile_config_file $1)" &&
+    return 0 ||
+    return 1
+}
+
 # Source a profile into the environment.
 profile_with() {
     profile_name="$1"
-    profile_file="$profile_dir/$profile_name.conf"
-    test -r "$profile_file" ||
-    die "profile not found: $profile_file"
-    . "$profile_dir/$1.conf"
+    profile_file=$(profile_config_file "$profile_name")
+    profile_okay "$profile_file" ||
+    die "profile not found: $(tildize $profile_file)"
+    . "$profile_file"
     profile_host=${host:-$profile_name}
     profile_user=${user:-$LOGNAME}
     profile_port=${port:-22}

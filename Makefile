@@ -80,6 +80,7 @@ SCRIPT_SH = \
 	hem-down.sh \
 	hem-info.sh \
 	hem-init.sh \
+	hem-push-keys.sh \
 	hem-sh-setup.sh \
 	hem-status.sh \
 	hem-up.sh
@@ -89,7 +90,7 @@ SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH))
 PROGRAM_SH = hem.sh
 PROGRAMS = $(patsubst %.sh,%,$(PROGRAM_SH))
 
-all:: $(SCRIPTS)
+all:: $(SCRIPTS) $(PROGRAMS)
 
 # Build all hem-XXX scripts by substituting build time variables and
 #
