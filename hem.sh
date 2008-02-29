@@ -55,6 +55,7 @@ do
         -*)          usage;;
         *)           break;;
     esac
+    shift
 done
 
 # Bail if no command given..
@@ -79,6 +80,9 @@ do
     esac
     shift
 done
+
+# Setup sub-command environment
+export quiet
 
 # Special case the init command - it doesn't take any profile arguments.
 if [ "$command" = init ] ; then
@@ -112,16 +116,25 @@ fi
 # Okay, all profiles check out. We loop through each and execute the
 # appropriate command:
 set +e
-command="$0-$command"
+full_command="$0-$command"
+
+# Make sure command exists
+if ! type "$full_command" >/dev/null 2>&1 ; then
+    usage 1 "unknown command: $command"
+fi
+
 failures=0
 for profile in $profiles ;
 do
-    if ! "$command" $command_args "$profile" ; then
+    if ! "$full_command" $command_args "$profile" ; then
         failures=$(expr $failures + 1)
     fi
 done
 
-test $failures -gt 0 &&
-die "multiple ($failures) failures."
-
-exit 0
+if [ $failures -gt 1 ] ; then
+    die "multiple failures."
+elif [ $failures -eq 1 ] ; then
+    exit 1
+else
+    exit 0
+fi

@@ -21,14 +21,20 @@ Copyright (c) 2008, Ryan Tomayko <rtomayko@gmail.com>."
 # Quit with non-zero exit code.
 die() {
     test $# -gt 0 &&
-    echo >&2 "fatal: $progname:" "$@"
+    echo >&2 "$progname:" "$@"
     exit 1
 }
 
 # Print usage and exit.
 usage() {
     echo "Usage: $progname $USAGE"
-    exit ${1:-1}
+    if [ $# -gt 1 ] ; then
+        exitcode=$1 ; shift
+        echo >&2 "$@"
+        exit $exitcode
+    else
+        exit ${1:-1}
+    fi
 }
 
 # Log a message
@@ -44,6 +50,7 @@ log() {
 info() {
     test -z "$quiet" &&
     echo "$@"
+    return 0
 }
 
 # Open an editor with the arguments provided.
@@ -161,7 +168,9 @@ profile_with() {
     profile_statefile=${statefile:-"$state_dir"/$profile_name}
     profile_monitor_port=${profile_monitor_port:-0}
     profile_remote="$profile_user@$profile_host:$profile_port"
-    unset host user port pidfile statefile
+    profile_tunnels="${tunnels:-}"
+    profile_extra_args="${extra_args:-}"
+    unset -v host user port pidfile statefile tunnels extra_args
     return 0
 }
 

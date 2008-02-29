@@ -72,8 +72,28 @@ fi
 
 # Build autossh command
 command="autossh -M $profile_monitor_port"
-test -z "$front" && command="$command -f"
-command="$command -- -l $profile_user -p $profile_port -NM $profile_host"
+
+# keep autossh in foreground
+test -z "$front" &&
+command="$command -f"
+
+# going into ssh arguments, don't execute anything and be a control
+# master.
+command="$command -- -NM"
+
+# remote ssh login name
+test "$profile_user" != "$LOGNAME" &&
+command="$command -l $profile_user"
+
+# remote ssh port
+test "$profile_port" != 22 &&
+command="$command -p $profile_port"
+
+# tunnels and extra arguments
+command="$command $profile_tunnels $profile_extra_args"
+
+# remote host
+command="$command $profile_host"
 
 # Log it
 log "+ $command"
