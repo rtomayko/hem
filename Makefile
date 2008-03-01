@@ -105,6 +105,7 @@ $(SCRIPTS) $(PROGRAMS): % : %.sh
 	    -e 's|@@HEM_EXEC_DIR@@|$(libexecdir)|g' \
 	    $@.sh >$@+ && \
 	chmod +x $@+ && \
+	chmod -w $@+ && \
 	$(SHELL_T) $@+ && \
 	mv $@+ $@
 
