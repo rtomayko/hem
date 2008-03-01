@@ -9,10 +9,10 @@ connection upedness and can automatically bounce downed connection.
 Hem is Free Software covered by the "New and Simplified BSD License". It
 was originally written by Ryan Tomayko <rtomayko@gmail.com>.
 
-Please read the file INSTALL for installation instructions. Hem should
-run on most flavors of Unix and GNU that include a posix compatible sh
-interpreter. Hem currently requires OpenSSH's ssh(1) as well as Carson
-Harding's autossh(1).
+Please read the file INSTALL for installation and hacking instructions. Hem
+should run on most flavors of Unix/Gnu that include a posix compatible sh
+interpreter. Hem currently requires OpenSSH's ssh(1) as well as Carson Harding's
+autossh(1).
 
 More information on Hem is accessible from http://tomayko.com/src/hem/
 including full documentation, examples, and distributables. There is
