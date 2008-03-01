@@ -36,9 +36,9 @@ Global Options:
   -c, --config <file>   Load alternative config file.
       --help            Show usage and exit."
 
-# Bring in shell helpers
 MANUAL_ARGS=1
 . hem-sh-setup
+
 
 quiet=
 command=
@@ -46,100 +46,106 @@ command_args=
 profiles=
 hem_dir=
 
-# Parse top-level arguments...
+# parse top-level arguments...
 while [ $# -gt 0 ]
 do
-    case "$1" in
-        -q|--quiet)  quiet=1 ;;
-        -c|--config) die "Sorry, the --config options is not yet implemented.";;
-        -*)          usage;;
-        *)           break;;
-    esac
-    shift
+	case "$1" in
+		-q|--quiet)
+			quiet=1
+			;;
+		-c|--config)
+			die "Sorry, the --config options is not yet implemented."
+			;;
+		-*)
+			usage
+			;;
+		*)
+			break
+	esac
+	shift
 done
 
-# Bail if no command given..
+# bail if no command given..
 test $# -eq 0 &&
 usage
 
-# Determine command.
+# determine command.
 command="$1"
 shift
 
-# Parse command arguments
+
+# parse command arguments
 while [ $# -gt 0 ]
 do
-    case "$1" in
-        --help) $0-$command --help |
-                sed "s/$progname-/$progname /g" |
-                sed "s/<profile>$/[<profile> ...]/g"
-                exit 1
-                ;;
-        -*)     command_args="$command_args $1";;
-         *)     break;;
-    esac
-    shift
+	case "$1" in
+		--help)
+			$0-$command --help |
+			sed "s/$progname-/$progname /g" |
+			sed "s/<profile>$/[<profile> ...]/g"
+			exit 1
+			;;
+		-*)
+			command_args="$command_args $1"
+			;;
+		*)
+			break
+	esac
+	shift
 done
 
-# Setup sub-command environment
+# setup sub-command environment
 export quiet
 
-# Special case the init command - it doesn't take any profile arguments.
+# special case the init command - it doesn't take any profile arguments.
 if [ "$command" = init ] ; then
-    exec $0-init $command_args
+	exec $0-init $command_args
 fi
 
-# Should be safe to bring in config now.
+# should be safe to bring in config now.
 need_config
 
-# Figure out what profiles we're operating on..
+
+# figure out what profiles we're operating on..
 group_operation=
 if [ $# -gt 0 ] ; then
-    profiles="$@"
-    for profile in $profiles
-    do
-        profile_file="$(profile_config_file $profile)"
-        profile_okay $profile_file ||
-        die "Bad profile: $profile ($(tildize "$profile_file"))"
-    done
+	profiles="$@"
+	for profile in $profiles
+	do
+		profile_file="$(profile_config_file $profile)"
+		profile_okay $profile_file ||
+		die "Bad profile: $profile ($(tildize "$profile_file"))"
+	done
 else
-    group_operation=1
-    # No profile names were provided. We need to run the commands on
-    # all of them.
-    profiles=$(
-      (cd "$profile_dir" && echo * | grep -v '~$')
-    )
-    # Exit if no profiles are available.
-    test -z "$profiles" &&
-    die "No connection profiles."
-    # TODO: info message describing how to setup first profile.
+	group_operation=1
+	profiles=$( (cd "$profile_dir" && echo * | grep -v '~$') )
+	test -z "$profiles" &&
+	die "No connection profiles."
+	# TODO: info message describing how to setup first profile.
 fi
-
-# Okay, all profiles check out. We loop through each and execute the
-# appropriate command:
-set +e
-full_command="$0-$command"
 
 # Make sure command exists
+full_command="$0-$command"
 if ! type "$full_command" >/dev/null 2>&1 ; then
-    usage 1 "unknown command: $command"
+	usage 1 "unknown command: $command"
 fi
 
+# Loop over selected profiles, kicking off command for each.
 failures=0
 result=
 for profile in $profiles ;
 do
-    if ! "$full_command" $command_args "$profile" ; then
-        result=$?
-        test $result = 1 &&
-        failures=$(expr $failures + 1)
-    fi
+	if ! "$full_command" $command_args "$profile" ; then
+		result=$?
+		test $result = 1 &&
+		failures=$(expr $failures + 1)
+	fi
 done
 
+# Exit based on whether the commands
 if [ $failures -gt 1 ] ; then
-    die "multiple failures."
+	die "multiple failures."
 elif [ $failures -eq 1 ] ; then
-    exit 1
+	exit 1
 else
-    exit 0
+	exit 0
 fi

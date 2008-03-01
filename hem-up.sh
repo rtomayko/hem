@@ -11,39 +11,38 @@ This command exits with 1 when the command does not come up
 properly, 2 when the connection is already is already up, and 0 if
 sucessful."
 
-# Bring in basic sh configuration
 . hem-sh-setup
 need_config
 
-# Parse arguments
+# parse arguments
 front=
 while [ $# -gt 0 ]
 do
-    case "$1" in
-        -f,--front)   front=1 ;;
-        -*)           usage   ;;
-        *)            break   ;;
-    esac
-    shift
+	case "$1" in
+		-f,--front)
+			front=1
+			;;
+		-*)
+			usage
+			;;
+		*)
+			break
+			;;
+	esac
+	shift
 done
 
-# Grab profile or die
-profile_name="$1"
+# setup the profile
+profile_name="$1" ; shift
 test -z "$profile_name" && usage
-shift
-
-# Die if more than one profile provided
 test $# -gt 0 && usage
-
-# Bring in profile settings
 profile_with $profile_name
 
-# Check that connection isn't already running.
+# check that connection isn't already running.
 if $execdir/hem-status --check $profile_name ; then
-    info "$profile_name is already up"
-    exit 2
+	info "$profile_name is already up"
+	exit 2
 fi
-
 info "bringing up: $profile_name"
 log "bringing up $profile_name"
 
@@ -67,37 +66,31 @@ AUTOSSH_PORT=${profile_monitor_port:-0}
 
 # export autossh environment
 export AUTOSSH_DEBUG AUTOSSH_GATETIME AUTOSSH_LOGLEVEL AUTOSSH_LOGFILE \
-    AUTOSSH_PATH AUTOSSH_PIDFILE AUTOSSH_POLL AUTOSSH_FIRST_POLL AUTOSSH_PORT
+	AUTOSSH_PATH AUTOSSH_PIDFILE AUTOSSH_POLL AUTOSSH_FIRST_POLL AUTOSSH_PORT
 
 # There's some oddness with setting the AUTOSSH_PORT environment variable
 # to zero that seems to stop autossh from coming up.
 if test "$AUTOSSH_PORT" = 0 ; then
-    unset AUTOSSH_PORT
-    export AUTOSSH_PORT
+	unset AUTOSSH_PORT
+	export AUTOSSH_PORT
 fi
 
 # Build autossh command
 command="autossh -M $profile_monitor_port"
-
 # keep autossh in foreground
 test -z "$front" &&
 command="$command -f"
-
 # going into ssh arguments, don't execute anything and be a control
 # master.
 command="$command -- -NM"
-
 # remote ssh login name
 test "$profile_user" != "$LOGNAME" &&
 command="$command -l $profile_user"
-
 # remote ssh port
 test "$profile_port" != 22 &&
 command="$command -p $profile_port"
-
 # tunnels and extra arguments
 command="$command $profile_tunnels $profile_extra_args"
-
 # remote host
 command="$command $profile_host"
 
@@ -105,10 +98,10 @@ command="$command $profile_host"
 log "+ $command"
 
 if $command ; then
-    log "autossh is up"
-    exit 0
+	log "autossh is up"
+	exit 0
 else
-    result=$?
-    log "autossh failed with $result"
-    die "autossh failed with $result"
+	result=$?
+	log "autossh failed with $result"
+	die "autossh failed with $result"
 fi

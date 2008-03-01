@@ -1,6 +1,5 @@
 #!/bin/sh
 set -e
-
 USAGE="[OPTIONS] <profile>"
 LONG_USAGE="Output configuration information for <profile>.
 
@@ -26,21 +25,39 @@ need_config
 
 vars=
 while [ $# -gt 0 ] ; do
-    case "$1" in
-        -f|--pid-file)      vars="$vars pidfile" ;;
-        -F|--profile)       vars="$vars file" ;;
-        -m|--monitor)       vars="$vars monitor_port" ;;
-        -p|--port)          vars="$vars port" ;;
-        -P|--pid)           vars="$vars pid" ;;
-        -r|--remote)        vars="$vars remote" ;;
-        -t|--host)          vars="$vars host" ;;
-        -u|--user)          vars="$vars user" ;;
-        -*)                 echo >&2 "$progname: unknown argument: $1"
-                            usage
-                            ;;
-        *)                  break ;;
-    esac
-    shift
+	case "$1" in
+		-f|--pid-file)
+			vars="$vars pidfile"
+			;;
+		-F|--profile)
+			vars="$vars file"
+			;;
+		-m|--monitor)
+			vars="$vars monitor_port"
+			;;
+		-p|--port)
+			vars="$vars port"
+			;;
+		-P|--pid)
+			vars="$vars pid"
+			;;
+		-r|--remote)
+			vars="$vars remote"
+			;;
+		-t|--host)
+			vars="$vars host"
+			;;
+		-u|--user)
+			vars="$vars user"
+			;;
+		-*)
+			echo >&2 "$progname: unknown argument: $1"
+			usage
+			;;
+		*)
+			break
+	esac
+	shift
 done
 
 test -z "$1" && usage
@@ -51,18 +68,18 @@ test -n "$1" && usage
 profile_with $profile_name
 
 if [ -n "$vars" ] ; then
-    for var in $vars ;
-    do
-        eval "echo \$profile_$var"
-    done
+	for var in $vars ;
+	do
+		eval "echo \$profile_$var"
+	done
 else
-    echo "# $profile_name: $(tildize $profile_file)"
-    set |
-    grep '^profile_' |
-    grep -v '^profile_dir=' |
-    grep -v '^profile_file=' |
-    grep -v '^profile_name=' |
-    sed 's/^profile_//' |
-    sed "s@=$HOME@=~@" |
-    sort
+	echo "# $profile_name: $(tildize $profile_file)"
+	set |
+	grep '^profile_' |
+	grep -v '^profile_dir=' |
+	grep -v '^profile_file=' |
+	grep -v '^profile_name=' |
+	sed 's/^profile_//' |
+	sed "s@=$HOME@=~@" |
+	sort
 fi

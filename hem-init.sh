@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 USAGE="[-f] [-e] [-c <dir>]"
 LONG_USAGE="Initialize a template configuration directory structure in <dir>.
 
@@ -6,32 +7,38 @@ LONG_USAGE="Initialize a template configuration directory structure in <dir>.
   -e               Open an editor on the config file after creating
   -f               Force overwrite existing configuration"
 
+
 . hem-sh-setup
-
-set -e
-
 configure_defaults
 need_ssh
 
+# parse arguments
 force=
 editconfig=
 while getopts efqc: o
 do
-    case "$o" in
-        f)   force=1;;
-        q)   quiet=1;;
-        e)   editconfig=1;;
-        [?]) usage;;
-    esac
+	case "$o" in
+		f)
+			force=1
+			;;
+		q)
+			quiet=1
+			;;
+		e)
+			editconfig=1
+			;;
+		[?])
+			usage
+	esac
 done
 
-# Bail if the directory already exists.
+# bail if the directory already exists.
 test -d "$HEM_DIR" -a -z "$force" &&
 die "$HEM_DIR already exists."
 
 info "Creating template structure under $(tildize $HEM_DIR) ..."
 
-# Create directories ...
+# create directories ...
 mkdir -p "$HEM_DIR"     && info "mkdir $(tildize "$HEM_DIR")"
 mkdir -p "$run_dir"     && info "mkdir $(tildize "$run_dir")"
 mkdir -p "$profile_dir" && info "mkdir $(tildize "$profile_dir")"
@@ -42,8 +49,8 @@ info "touch $log_to"
 
 configfile="$HEM_DIR/config"
 if test -f "$configfile" ; then
-    mv "$configfile" "${configfile}~"
-    info "backed up $(tildize "$configfile") to $(basename "$configfile")~"
+	mv "$configfile" "${configfile}~"
+	info "backed up $(tildize "$configfile") to $(basename "$configfile")~"
 fi
 
 # Create template config file
@@ -75,7 +82,7 @@ monitor_port=$monitor_port
 EOF
 
 if test -n "$editconfig" ; then
-    editor "$configfile"
+	editor "$configfile"
 else
-    info "Edit configuration in: $(tildize "$configfile")"
+	info "edit configuration in: $(tildize "$configfile")"
 fi
