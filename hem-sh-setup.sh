@@ -107,13 +107,14 @@ configure_defaults() {
 	state_dir=${state_dir:-"$HEM_DIR/state"}
 	profile_dir=${conf_dir:-"$HEM_DIR/profile"}
 	poll_time=${poll_time:-600}
-	ssh_command=${ssh_command:-$(type -P ssh)}
+	ssh_command=${ssh_command:-$(type -p ssh)}
 	monitor_port=${monitor_port:-$(default_monitor_port)}
 }
 
 need_ssh() {
-	ssh_command=${ssh_command:-$(type -P ssh)}
-	test -n "$ssh_command" || die "ssh not found."
+	ssh_command=${ssh_command:-$(type -p ssh)}
+	test -n "$ssh_command" ||
+	die "ssh not found."
 	return 0
 }
 
@@ -130,7 +131,8 @@ need_config() {
 	. $configfile
 	configure_defaults
 	need_ssh
-	test -d "$run_dir" || die "bad run_dir: $run_dir"
+	test -d "$run_dir" ||
+	die "bad run_dir: $run_dir"
 }
 
 
@@ -158,6 +160,7 @@ profile_okay() {
 profile_with() {
 	profile_name="$1"
 	profile_file=$(profile_config_file "$profile_name")
+	tunnels=
 	profile_okay "$profile_file" ||
 	die "profile not found: $(tildize $profile_file)"
 	. "$profile_file"
@@ -178,5 +181,12 @@ profile_with() {
 profile_reset() {
 	unset profile_name profile_file \
 		profile_host profile_user profile_port \
-		profile_pidfile profile_statefile
+		profile_pidfile profile_statefile profile_tunnels \
+		profile_extra_args
+}
+
+# tunnel ["on"] [addr:]port ["to"] host:port
+# tunnel [addr:]port:host:port
+tunnel() {
+	tunnels="$tunnels -L$1"
 }
