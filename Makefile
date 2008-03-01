@@ -17,6 +17,9 @@ TAR = tar
 FIND = find
 INSTALL = install
 SHELL_PATH = /bin/sh
+PERL = perl
+SSH = ssh
+AUTOSSH = autossh
 
 # ---- END OF CONFIGURATION ----
 
@@ -71,7 +74,8 @@ ifndef V
 endif
 endif
 
-
+# bring in configure generated make stuff if present
+-include config.mak
 
 # These are all currently installed to $(bindir) but the hem-XXX scripts will
 # probably move to a libexec directory, eventually.
@@ -104,6 +108,8 @@ $(SCRIPTS) $(PROGRAMS): % : %.sh
 	$(SHELL_T) $@+ && \
 	mv $@+ $@
 
+$(SCRIPTS) $(PROGRAMS): config.mak
+
 # ---- INSTALL TARGETS ----
 
 DOCFILES = README INSTALL VERSION
@@ -133,12 +139,21 @@ dist: $(DIST_TAR_GZ)
 
 # ---- MISC TARGETS ----
 
+# make all repeatedly (useful for development)
+auto:
+	@while true ; do $(MAKE) | grep -v 'Nothing to be done' ; sleep 1 ; done
+
 clean:
 	$(RM) $(SCRIPTS)
 	$(RM) $(patsubst %.sh,%+,$(SCRIPT_SH))
 	$(RM) $(DIST_TAR_GZ)
 
-.PHONY : all clean dist install
+config:
+	@echo prefix = $(prefix)
+	@echo perl = $(PERL)
+	@echo BUILD_AUTOSSH = $(BUILD_AUTOSSH)
+
+.PHONY : all clean dist install auto config
 
 FORCE:
 

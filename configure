@@ -1,0 +1,162 @@
+#!/bin/sh
+
+cd $(dirname $0)
+rm -f config.mak
+
+SHARED=0
+PREFIX="/usr/local"
+
+APPNAME="hem"
+APPVERS="$(cat VERSION)"
+
+CC=gcc
+CFLAGS="-Iinclude -O2 -Wall"
+CFLAGS_ADD='-o $@'
+CFLAGS_EXE='-o '
+
+LDFLAGS='-L.'
+LDFLAGS_ADD=''
+
+SYSTEM=${SYSTEM:-$(uname -s 2>/dev/null || echo unknown)}
+echo "configuring for ${SYSTEM} ..."
+
+SSH=${SSH:-$(type -p ssh)}
+PERL=${PERL:-$(type -p perl)}
+AUTOSSH=${AUTOSSH:-$(type -p autossh)}
+
+BUILD_AUTOSSH=$(test $AUTOSSH && echo no || echo yes)
+
+while test $# -ge 1; do
+case "$1" in
+	-h* | --h*)
+		echo "usage: ./configure [OPTION]... [VAR=VALUE]"
+		echo
+		echo "  --prefix=PREFIX             install $APPNAME under PREFIX [$PREFIX]"
+		echo
+		echo "  --with-autossh[=PATH]       use the autossh at PATH [$AUTOSSH]"
+		echo "  --with-ssh=PATH             use the ssh at PATH [$SSH]"
+		echo "  --with-perl=PATH            use the perl at PATH [$PERL]"
+		echo ""
+		echo "  --development               build for working copy."
+		exit 0
+		;;
+	--prefix=*)
+		PREFIX=`echo $1 | sed 's/[-a-z_]*=//'`
+		shift
+		;;
+	--prefix)
+		PREFIX="$2"
+		shift; shift
+		;;
+	--with-autossh=*)
+		BUILD_AUTOSSH=no
+		AUTOSSH=`echo $1 | sed 's/[-a-z_]*=//'`
+		shift
+		;;
+	--with-autossh)
+		BUILD_AUTOSSH=yes
+		AUTOSSH=
+		shift
+		;;
+	--without-autossh)
+		BUILD_AUTOSSH=no
+		shift
+		;;
+	--with-ssh=*)
+		SSH=`echo $1 | sed 's/[-a-z_]*=//'`
+		shift
+		;;
+	--with-perl=*)
+		PERL=`echo $1 | sed 's/[-a-z_]*=//'`
+		shift
+		;;
+	--development)
+		BUILD_AUTOSSH=no
+		PREFIX=$(pwd)
+		BINDIR="$PREFIX"
+		DOCDIR="$PREFIX/doc"
+		MANDIR="$DOCDIR"
+		shift
+		;;
+	-cflags=* | --cflags=*)
+		CFLAGS_USER=`echo $1 | sed 's/[-a-z_]*=//'`
+		shift
+		;;
+	-cflags | --cflags)
+		CFLAGS_USER="$2"
+		shift; shift
+		;;
+	*)
+		echo "ERROR: unknown option $1."
+		exit 1
+		;;
+esac
+done
+
+BINDIR=${BINDIR:-$PREFIX/bin}
+EXECDIR=${EXECDIR:-$BINDIR}
+DOCDIR=${DOCDIR:-$PREFIX/share/doc}
+MANDIR=${MANDIR:-$PREFIX/share/man}
+
+# path to ssh
+echo -n "checking for ssh..."
+test -n "$SSH" && echo " yes [$SSH]" || {
+	echo " FAIL"
+	exit 1
+}
+
+# path to perl
+echo -n "checking for perl..."
+test -n "$PERL" && echo " yes [$PERL]" || {
+	echo " FAIL"
+	exit 1
+}
+
+# path to autossh
+if [ $BUILD_AUTOSSH = no ]; then
+	# path to autossh
+	echo -n "checking for autossh..."
+	if test -n "$AUTOSSH" ; then
+		echo " yes [$AUTOSSH]"
+		AUTOSSH_VERS=$($AUTOSSH -V 2>/dev/null)
+		case "$AUTOSSH_VERS" in
+			'autossh 1.4') ;;
+			"autossh 1.4a") ;;
+			*) echo "WARN: unknown autossh version: $AUTOSSH_VERS"
+		esac
+	else
+		echo " FAIL"
+	fi
+else
+	echo "configuring autossh for install at $PREFIX/bin/autossh"
+	AUTOSSH="$PREFIX/bin/autossh"
+	cd ./autossh
+	if ./configure --prefix="$PREFIX" --with-ssh="$SSH"; then
+		echo "autossh configured successfully..."
+	else
+		echo "could not configure autossh..."
+		exit 1
+	fi
+	cd ..
+fi
+
+# path to autossh
+
+echo -n "writing config to config.mak... "
+cat <<EOF > ./config.mak
+prefix = $PREFIX
+bindir = $BINDIR
+libexecdir = $EXECDIR
+mandir = $MANDIR
+docdir = $DOCDIR/$APPNAME
+
+BUILD_AUTOSSH = $BUILD_AUTOSSH
+
+AUTOSSH = $AUTOSSH
+SSH = $SSH
+PERL = $PERL
+EOF
+
+echo "done."
+
+exit 0
