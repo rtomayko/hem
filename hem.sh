@@ -24,11 +24,13 @@ Hem is an ssh controller and automatic tunnel daemon.
 
 Available commands:
   init                  initialize the ~/.hem directory
+  manage                add a new profile / edit existing profile
   info                  show profile configuration
-  up                    bring all automatic connections up
-  down                  take all automatic connections down
-  bounce                restart all automatic connections
   status                show connection status
+
+  up                    bring connection profiles up
+  down                  take connection profiles down
+  bounce                restart connection profiles
 
 Global options:
   -c, --config <file>   load alternative config file
@@ -56,7 +58,7 @@ quiet=
 verbose=
 
 # commands that do not require valid profile names as arguments.
-simple_commands="init manage help"
+simple_commands="init list manage help"
 
 # with no arguments, bail out with usage
 if [ $# -eq 0 ] ; then

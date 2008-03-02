@@ -72,6 +72,7 @@ SCRIPT_SH = \
 	hem-down.sh \
 	hem-info.sh \
 	hem-init.sh \
+	hem-list.sh \
 	hem-manage.sh \
 	hem-push-keys.sh \
 	hem-sh-setup.sh \

@@ -14,3 +14,4 @@ test.stdout
 test.stderr
 test
 hem-manage
+hem-list
