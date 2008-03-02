@@ -3,42 +3,58 @@
 # functions.
 
 # setup some common variables.
-progname=$(basename $0)
+progname=$(basename $0)                       # hem-foo-bar
+commname=$(echo "$progname" | sed 's/-/ /')   # hem foo-bar
 workdir=$(pwd)
-execdir=$(dirname $0)
+PS4=${PS4:-"+ "}
 
-# these may be inherited from the environment
-configfile=
-quiet=${quiet:-}
-
-# we assume that the calling script has set USAGE and possibly LONG_USAGE.
-[ -n "$LONG_USAGE" ] &&
-USAGE="$USAGE
-$LONG_USAGE
-
-Copyright (c) 2008, Ryan Tomayko <rtomayko@gmail.com>."
-
-# quit with non-zero exit code.
+# die [<message>]
+#
+# Exit with a status of 1. If <message> is provided, write it to stderr before
+# exiting.
 die() {
-	test $# -gt 0 &&
-	echo >&2 "$progname:" "$@"
+	test $# -gt 0 && {
+		echo >&2 "$commname:" "$@"
+		log "$@"
+	}
 	exit 1
 }
 
-# print usage and exit.
+# usage
+#
+# Write program usage to stdout. This function does not exit.
 usage() {
-	echo "Usage: $progname $USAGE"
-	if [ $# -gt 1 ] ; then
-		exitcode=$1 ; shift
-		echo >&2 "$@"
-		exit $exitcode
-	else
-		exit ${1:-1}
-	fi
+	echo "Usage: $commname $USAGE"
 }
 
-# log a message
+
+# see_usage [<message>]
+#
+# Show basic program usage and exit with status 1. If <message> is provided,
+# write that message to stderr before anything else.
+see_usage() {
+	test $# -gt 0 &&
+	echo >&2 "$commname:" "$@"
+	echo "Usage: $commname $USAGE" | head -1
+	echo "See: $commname --help"
+	exit 1
+}
+
+if [ $# -gt 0 ] && [ "$1" == '--help' ] ; then
+	usage
+	exit 0
+fi
+
+# log <message>
+#
+# Log a message to the configured log destination. When log_to is empty,
+# messages are logged using logger(1); otherwise, messages are written to the
+# file specified.
+#
+# If verbose is set, the message is also written to stderr with a PS4 prefix.
 log() {
+	[ $verbose ] &&
+	echo >&2 "${PS4}$progname:" "$@"
 	if [ -n "$log_to" ] ; then
 		echo "$(date +'%Y-%m-%d %H:%M:%S') $progname[$$]" "$@" >> "$log_to"
 	else
@@ -46,101 +62,84 @@ log() {
 	fi
 }
 
-# write non-critical informational message to STDOUT.
+
+# info <message>
+#
+# Write non-critical informational message to stdout unless the
+# quiet environment variable is set. The message is also written to
+# the log.
 info() {
-	test -z "$quiet" &&
-	echo "$@"
+	[ $quiet ]   || echo "$@"
+	[ $verbose ] || log "$@"
 	return 0
 }
 
-# open an editor with the arguments provided.
+
+# editor [<args>] <file>
+#
+# Open an editor with the arguments provided. Use VISUAL, EDITOR, and then vi;
+# in that order.
 editor() {
-	test -n "$VISUAL" && $VISUAL "$@"
-	${EDITOR:-'vi'} "$@"
+	VISUAL=${VISUAL:-}
+	if [ -n "$VISUAL" ]; then
+		$VISUAL "$@"
+	else
+		${EDITOR:-'vi'} "$@"
+	fi
 }
 
-# convert $HOME at the beginning of arg to tilde ("~")
+
+# tildize <path>
+#
+# Convert $HOMEs to tildes ("~") at the beginning of <path>.
 tildize() {
-	echo "$1" | sed "s@^$HOME@~@"
+	echo "${1:-}" | sed "s@^$HOME@~@"
 	return 0
 }
 
-# don't ever run this file directly.
-test "$progname" = "hem-sh-setup" &&
-die "Try: hem --help"
 
-# sourcing scripts can set MANUAL_ARGS to have the automatic
-# common arg parsing turned off.
-: ${MANUAL_ARGS=}
-
-# check for a -h or --help argument and show usage if found.
-if [ -z "$MANUAL_ARGS" ] ; then
-	_confnext=
-	for i in "$@"
-	do
-		if [ "$_confnext" = 1 ] ; then
-			HEM_DIR="$i"
-			_confnext=
-		elif [ "$i" = '--config' ] ; then
-			_confnext=1
-		elif [ "$i" = '--help' ] ; then
-			usage 0
-		elif [ "$i" = '--' ]; then
-			break
-		fi
-	done
-	unset _confnext
-fi
-
-HEM_DIR=${HEM_DIR:-~/.hem}
-
-# use the uid to generate a base monitor port that won't clash with
-# others.
-default_monitor_port() {
-	expr 51243 + $(id -u)
-}
-
-# Setup default configuration
-configure_defaults() {
-	log_to=${log_to:-"$HEM_DIR/log"}
-	run_dir=${run_dir:-"$HEM_DIR/run"}
-	state_dir=${state_dir:-"$HEM_DIR/state"}
-	profile_dir=${conf_dir:-"$HEM_DIR/profile"}
-	poll_time=${poll_time:-600}
-	ssh_command=${ssh_command:-$(type -p ssh)}
-	monitor_port=${monitor_port:-$(default_monitor_port)}
-}
-
-need_ssh() {
-	ssh_command=${ssh_command:-$(type -p ssh)}
-	test -n "$ssh_command" ||
-	die "ssh not found."
+# remote_part [<user>@]<host>[:<port>]
+#
+# Convert a <remote> spec like 'foo@bar.com:75' into its parts,
+# setting the following variables:
+#
+#   remote_user     the user portion of the remote spec (or $USER)
+#   remote_host     the host portion of the remote spec
+#   remote_port     the port portion of the remote spec (or 22)
+#
+# TODO: this is pretty much insane. there's gotta be a better way of
+# pulling these pieces apart.
+remote_part() {
+	if [ $(expr "$1" : '.*@') -gt 0 ]; then
+		remote_user=$(echo "$1" | sed 's/\(.*\)@.*/\1/')
+		remote_host=$(echo "$1" | sed 's/.*@\(.*\)/\1/')
+	else
+		remote_user="$USER"
+		remote_host="$1"
+	fi
+	if [ $(expr "$remote_host" : '.*:') -gt 0 ]; then
+		remote_port=$(echo "$remote_host" | sed 's/.*:\(.*\)/\1/')
+		remote_host=$(echo "$remote_host" | sed 's/\(.*\):.*/\1/')
+	else
+		remote_port=22
+	fi
 	return 0
 }
 
-hem_config_loaded=
-need_config() {
-	test -n "$hem_config_loaded" && return 0
-	hem_config_loaded=1
-	configfile="$HEM_DIR/config"
-	test -r "$configfile" || {
-		echo >&2 "fatal: $progname: configuration not found: $(tildize $configfile)"
-		info "See \`hem init --help\` to initialize a new configuration directory."
-		exit 1
-	}
-	. $configfile
-	configure_defaults
-	need_ssh
-	test -d "$run_dir" ||
-	die "bad run_dir: $run_dir"
-}
 
+# ---------------------------------------------------------------------
+# Profile Related Functions
+# ---------------------------------------------------------------------
 
-# Profile Helpers =============================================================
-
-# Outputs the path to a profile file given a profile name. No
-# attempt is made to check that the profile exists or is syntactally valid.
-profile_config_file() {
+# profile_path <name>|<path>
+#
+# Outputs the path to a profile file given a profile name or profile
+# path. No attempt is made to check that the profile exists or is
+# syntactally valid.
+#
+# Most profile_XXX functions call this when they indicate a <profile>
+# argument.
+profile_path() {
 	if [ "$(expr "$1" : '\/')" = 1 ] ; then
 		echo "$1"
 	else
@@ -149,44 +148,109 @@ profile_config_file() {
 	return 0
 }
 
-# Checks that a profile exists and is syntactically valid.
-profile_okay() {
-	test -r "$(profile_config_file $1)" &&
+# profile_check <profile>
+#
+# Check that a profile exists.
+profile_exist() {
+	test -r "$(profile_path $1)" &&
 	return 0 ||
 	return 1
 }
 
-# Source a profile into the environment.
-profile_with() {
-	profile_name="$1"
-	profile_file=$(profile_config_file "$profile_name")
-	tunnels=
-	profile_okay "$profile_file" ||
-	die "profile not found: $(tildize $profile_file)"
-	. "$profile_file"
-	profile_host=${host:-$profile_name}
-	profile_user=${user:-$LOGNAME}
-	profile_port=${port:-22}
-	profile_pidfile=${pidfile:-"$run_dir"/$profile_name.pid}
-	profile_statefile=${statefile:-"$state_dir"/$profile_name}
-	profile_monitor_port=${profile_monitor_port:-0}
-	profile_remote="$profile_user@$profile_host:$profile_port"
-	profile_tunnels="${tunnels:-}"
-	profile_extra_args="${extra_args:-}"
-	unset -v host user port pidfile statefile tunnels extra_args
+# profile_load <profile>
+#
+# load the profile specified and set up some intelligent variable
+# defaults.
+profile_load() {
+	profile_file=$(profile_path $1)
+	profile_name=$(basename $profile_file)
+
+	# unset all profile variables
+	for i in host port user remote pidfile statefile monitor_port tunnels \
+		extra_args disabled
+	do eval "$i=" ; done
+
+	# source the profile
+	import $profile_name
+
+	# setup remote variables
+	remote=${remote:-$profile_name}
+	remote_part "$remote"
+	host=${host:-$remote_host}
+	port=${port:-$remote_port}
+	user=${user:-$remote_user}
+
+	# set misc/other variables
+	pidfile=${pidfile:-$run_dir/$profile_name.pid}
+	statefile=${statefile:-$state_dir/$profile_name}
+	monitor_port=${monitor_port:-0}
 	return 0
 }
 
-# Reset all profile variables.
-profile_reset() {
-	unset profile_name profile_file \
-		profile_host profile_user profile_port \
-		profile_pidfile profile_statefile profile_tunnels \
-		profile_extra_args
+# profile_required <profile>
+#
+# Useful for scripts that take a number of arguments followed by
+# a single <profile>.
+profile_required() {
+	test $# -gt 0 ||
+	see_usage "no <profile> specified."
+	profile_name="$1" ; shift
+	profile_load "$profile_name"
 }
 
-# tunnel ["on"] [addr:]port ["to"] host:port
-# tunnel [addr:]port:host:port
-tunnel() {
+# ---------------------------------------------------------------------
+# Profile Helper Function Library
+# ---------------------------------------------------------------------
+# The following functions are designed to be used within hem profiles
+# themselves.
+
+# import <profile>
+#
+# Loads the configuration from the profile specified into the current
+# profile. The <profile> argument may be a name relative to
+# <profile_dir> or the full path to some other file.
+import() {
+	_p=$(profile_path "$1")
+	if test -r "$_p" ; then
+		. "$_p"
+		return 0
+	else
+		die "profile not found: $(tildize $_p)"
+	fi
+}
+
+
+# forward [<bind>:]<listen-port> [to] [<host>:]<forward-port> [<name>]
+#
+# Add a local port forward. SSH will listen on port <listen-port> on the
+# interface <bind>. If no <bind> part is specified, the loopback interface
+# is assumed. Connections made to the port are forwarded to <host> on
+# <forward-port> on the remote side of the connection. If the <host> part
+# is omitted, localhost is assumed.
+forward() {
 	tunnels="$tunnels -L$1"
+	shift
+	[ "$1" = "to" ] && shift
+	[ $(expr "$1" : '.*:') -gt 0 ] &&
+	tunnels="$tunnels:$1" ||
+	tunnels="$tunnels:localhost:$1"
+	return 0
+}
+
+
+# backward [<bind>:]<listen-port> [to] [<host>:]<forward-port> [<name>]
+#
+# Add a remote port forward. SSH will listen on port <listen-port> on the
+# interface <bind> on the remote side of the connection. If no <bind> part
+# is specified, the remote loopback interface is assumed. Connections made
+# to the port will be forward to <host> on <forward-port> on the local side
+# of the connection. If the <host> part is omitted, localhost is assumed.
+backward() {
+	tunnels="$tunnels -R$1"
+	shift
+	[ "$1" = "to" ] && shift
+	[ $(expr "$1" : '.*:') -gt 0 ] &&
+	tunnels="$tunnels:$1" ||
+	tunnels="$tunnels:localhost:$1"
+	return 0
 }

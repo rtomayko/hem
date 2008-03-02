@@ -1,58 +1,58 @@
 #!/bin/sh
 set -eu
-USAGE="[<signal>] <profile>"
-LONG_USAGE="Bring <profile> connection down.
+USAGE="[-s <sig>] <profile>...
+Take down one or more connections or send them a specific kill signal.
 
-When <sig> is given, kill the process with the signal specified. The default
-signal is -TERM.
+  -s, --signal <sig>    Take process down with signal <sig>.
+      --help            Display usage and exit.
 
-This command exits with 1 when the command does not come down
-properly, 2 when the connection is already is already down, and 0 if
-sucessful."
+This command exits with a status of 1 when the process does not come
+down properly."
 
 . hem-sh-setup
-need_config
-
 
 # parse arguments
 sig="-TERM"
-while [ $# -gt 0 ]
-do
-	case "$1" in
-		-[A-Z]*|-[0-9]*)
-			sig="$1"
-			;;
-		-*)
-			usage
-			;;
-		*)
-			break
-	esac
-	shift
+while [ $# -gt 0 ]; do
+case "$1" in
+	-s|--signal)
+		[ $# -lt 2 ] &&
+		see_usage "the --signal argument requires a value."
+		sig="$2"
+		shift; shift
+		;;
+	-*)
+		see_usage "invalid argument: $1"
+		;;
+	*)
+		break
+		;;
+esac
 done
 
+test $(expr "$sig" : '\-') = 1 ||
+sig="-$sig"
+
 # bring in profile settings
-profile_name="$1" ; shift
-test -z "$profile_name" && usage
-test $# -gt 0 && usage
-profile_with $profile_name
+profile_required "$@"
 
 # check that connection isn't already running.
-pid=$("$execdir/hem-status" --pid $profile_name)
+pid=$(hem-status --pid "$profile_name")
 if [ -z "$pid" ] ; then
 	info "$profile_name is already down"
 	exit 2
 fi
 
-info "taking down: $profile_name (pid: $pid) with $sig"
-log "taking down $profile_name (pid: $pid) with $sig"
+message="taking down: $profile_name (pid: $pid)"
+test "$sig" = "-TERM" ||
+message="$message with $sig"
+info "$message"
 
 command="kill $sig $pid"
-log "+ kill $sig $pid"
+log "$command"
 if $command ; then
 	exit 0
 else
 	result=$?
-	log "kill failed with $result"
 	die "kill failed with $result"
 fi

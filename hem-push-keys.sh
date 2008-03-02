@@ -1,30 +1,27 @@
 #!/bin/sh
 set -eu
-USAGE="<profile>"
-LONG_USAGE="Authorize your public key on the remote host."
+USAGE="<profile>...
+Authorize your public key on the remote host."
 
 . hem-sh-setup
-need_config
 
 # we need a profile ...
-profile_name="$1" ; shift
-test -z "$profile_name" && usage
-test $# -gt 0 && usage
-profile_with "$profile_name"
+profile_required "$@"
 
 # TODO: which public key to use should be configurable on a global
 #       or profile level.
-profile_public_key_file=${profile_public_key_file:-~/.ssh/id_dsa.pub}
+public_key_file=${public_key_file:-~/.ssh/id_dsa.pub}
 
 # check that we have a public key and kick off ssh-keygen if not.
-if ! test -r "$profile_public_key_file" ; then
+# TODO: autogenerating keys should be an option.
+if ! test -r "$public_key_file"; then
 	info "public key not found ... generating a new one."
 	ssh-keygen -t dsa
 fi
 
-info "authorizing on $profile_remote ($(tildize "$profile_public_key_file"))"
-public_key="$(cat $profile_public_key_file)"
-ssh -l $profile_user -p $profile_port $profile_host '/bin/sh -f' <<EOF
+info "authorizing on $remote ($(tildize "$public_key_file"))"
+public_key="$(cat $public_key_file)"
+ssh -l $user -p $port $host '/bin/sh -f' <<EOF
 	set -e
 	test -d ~/.ssh || {
 		mkdir ~/.ssh &&

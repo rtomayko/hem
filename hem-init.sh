@@ -1,61 +1,68 @@
 #!/bin/sh
-set -e
-USAGE="[-f] [-e] [-c <dir>]"
-LONG_USAGE="Initialize a template configuration directory structure in <dir>.
+set -eu
+hem_dir=$(echo $(dirname $HEM_CONFIG) | sed "s|^$HOME|~|")
+USAGE="[-e] [-f] [-d <dir>]
+Create a configuration directory structure in $hem_dir or the directory
+specified in -c <dir>.
 
-  -c <dir>         Specify the configuration directory (default: ~/.hem)
-  -e               Open an editor on the config file after creating
-  -f               Force overwrite existing configuration"
+  -d, --base-dir <dir>  override default config directory
+  -e, --edit            open an editor on the config file after creating
+  -f, --force           force overwrite existing configuration
 
+The following files and directories are created:
+
+  $hem_dir/config       hem configuration file.
+  $hem_dir/profile      profile directory for storing connection profiles.
+  $hem_dir/run          run-time directory for pid and state files."
 
 . hem-sh-setup
-configure_defaults
-need_ssh
 
 # parse arguments
 force=
 editconfig=
-while getopts efqc: o
-do
-	case "$o" in
-		f)
-			force=1
-			;;
-		q)
-			quiet=1
-			;;
-		e)
-			editconfig=1
-			;;
-		[?])
-			usage
-	esac
+echo args: "$@"
+while [ $# -gt 0 ]; do
+case "$1" in
+	-d|--base-dir)
+		test $# -lt 2 &&
+		die "missing value to --base-dir argument."
+		HEM_CONFIG="$2/config"
+		shift; shift
+		;;
+	-f|--force)
+		force=1
+		shift
+		;;
+	-e|--edit)
+		editconfig=1
+		shift
+		;;
+	*)
+		see_usage "invalid argument: $1"
+		;;
+esac
 done
 
+base_dir=$(dirname $HEM_CONFIG)
+
 # bail if the directory already exists.
-test -d "$HEM_DIR" -a -z "$force" &&
-die "$HEM_DIR already exists."
+test -d "$base_dir" -a -z "$force" &&
+die "$base_dir already exists."
 
-info "Creating template structure under $(tildize $HEM_DIR) ..."
-
-# create directories ...
-mkdir -p "$HEM_DIR"     && info "mkdir $(tildize "$HEM_DIR")"
-mkdir -p "$run_dir"     && info "mkdir $(tildize "$run_dir")"
-mkdir -p "$profile_dir" && info "mkdir $(tildize "$profile_dir")"
-mkdir -p "$state_dir"   && info "mkdir $(tildize "$state_dir")"
-test -n "$log_to" &&
-touch "$log_to" &&
-info "touch $log_to"
-
-configfile="$HEM_DIR/config"
-if test -f "$configfile" ; then
-	mv "$configfile" "${configfile}~"
-	info "backed up $(tildize "$configfile") to $(basename "$configfile")~"
+if [ -f "$HEM_CONFIG" ]; then
+	mv "$HEM_CONFIG" "$HEM_CONFIG~"
+	info "backed up $(tildize "$HEM_CONFIG") to $(basename "$HEM_CONFIG")~"
 fi
 
 # Create template config file
-cat <<-EOF > "$configfile"
-# hem configuration file
+mkdir -p "$base_dir"
+mkdir -p "$base_dir/profile"
+mkdir -p "$base_dir/run"
+cat <<EOF > "$HEM_CONFIG"
+# Hem configuration file (see hem_config(5) for more info)
+
+# Where are profiles stored?
+profile_dir=$(tildize $profile_dir)
 
 # Where to write log messages. Leave blank to use the syslog facility.
 log_to=$(tildize $log_to)
@@ -68,21 +75,10 @@ run_dir=$(tildize $run_dir)
 # outs (default 15 seconds) the network timeouts will be adjusted
 # downward to 1/2 the poll time.
 poll_time=$poll_time
-
-# The path to the ssh command to execute. Leave blank to use the
-# first ssh found on PATH.
-ssh_command=$ssh_command
-
-# The first monitor port. Each connection uses two monitor ports. You
-# should pick a port in the range 49152..65535, making sure to leave
-# room for each set of connections.
-monitor_port=$monitor_port
-
-# vim: ft=sh
 EOF
 
 if test -n "$editconfig" ; then
-	editor "$configfile"
+	editor "$HEM_CONFIG"
 else
 	info "edit configuration in: $(tildize "$configfile")"
 fi

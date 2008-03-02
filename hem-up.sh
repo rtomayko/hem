@@ -1,53 +1,53 @@
 #!/bin/sh
 set -eu
-USAGE="[-f] <profile>"
-LONG_USAGE="Bring <profile> connection up.
+USAGE="[-f] <profile>...
+Bring up one or more connection profiles.
 
-  -f, --front           Don't go to background. This is typically only
+  -f, --front           Don't background connection. This is typically only
                         useful for debugging configuration problems since
-                        error messages come up on the console.
+                        error messages are written to stdout.
+  -p, --pedantic        Exit with error status if already up.
 
-This command exits with 1 when the command does not come up
-properly, 2 when the connection is already is already up, and 0 if
-sucessful."
+      --help            Display usage and exit."
 
 . hem-sh-setup
-need_config
 
 # parse arguments
 front=
-while [ $# -gt 0 ]
-do
-	case "$1" in
-		-f,--front)
-			front=1
-			;;
-		-*)
-			usage
-			;;
-		*)
-			break
-			;;
-	esac
-	shift
+pedantic=
+while [ $# -gt 0 ]; do
+case "$1" in
+	-f|--front)
+		front=1
+		shift
+		;;
+	-p|--pedantic)
+		pedantic=1
+		shift
+		;;
+	-*)
+		see_usage "invalid argument: $1"
+		shift
+		;;
+	*)
+		break
+		;;
+esac
 done
 
 # setup the profile
-profile_name="$1" ; shift
-test -z "$profile_name" && usage
-test $# -gt 0 && usage
-profile_with $profile_name
+profile_required "$@"
 
 # check that connection isn't already running.
-if $execdir/hem-status --check $profile_name ; then
+if quiet=1 hem-status --check "$profile_name" ; then
 	info "$profile_name is already up"
 	exit 2
 fi
 info "bringing up: $profile_name"
-log "bringing up $profile_name"
 
 # write monitor port to state file
-echo $profile_monitor_port > $profile_statefile
+mkdir -p "$state_dir"
+echo "$monitor_port" > "$statefile"
 
 # Setup autossh environment variables. See autossh(1) for detailed
 # descriptions of each. The values below are typically the autossh
@@ -58,50 +58,55 @@ AUTOSSH_LOGLEVEL=5
 AUTOSSH_LOGFILE="$log_to"
 AUTOSSH_MAXSTART=-1
 AUTOSSH_MESSAGE=
-AUTOSSH_PATH="$ssh_command"
-AUTOSSH_PIDFILE="$profile_pidfile"
+#AUTOSSH_PATH="$ssh_command"
+AUTOSSH_PIDFILE="$pidfile"
 AUTOSSH_POLL=${poll_time:-600}
 AUTOSSH_FIRST_POLL=$AUTOSSH_POLL
-AUTOSSH_PORT=${profile_monitor_port:-0}
+AUTOSSH_PORT=${monitor_port:-0}
 
 # export autossh environment
 export AUTOSSH_DEBUG AUTOSSH_GATETIME AUTOSSH_LOGLEVEL AUTOSSH_LOGFILE \
-	AUTOSSH_PATH AUTOSSH_PIDFILE AUTOSSH_POLL AUTOSSH_FIRST_POLL AUTOSSH_PORT
+	AUTOSSH_PIDFILE AUTOSSH_POLL AUTOSSH_FIRST_POLL AUTOSSH_PORT
 
-# There's some oddness with setting the AUTOSSH_PORT environment variable
-# to zero that seems to stop autossh from coming up.
-if test "$AUTOSSH_PORT" = 0 ; then
+# XXX: there's some oddness with setting the AUTOSSH_PORT environment variable
+#      to zero that seems to stop autossh from coming up.
+if [ "$AUTOSSH_PORT" = 0 ]; then
 	unset AUTOSSH_PORT
 	export AUTOSSH_PORT
 fi
 
 # Build autossh command
-command="autossh -M $profile_monitor_port"
+command="autossh -M $monitor_port"
+
 # keep autossh in foreground
 test -z "$front" &&
 command="$command -f"
+
 # going into ssh arguments, don't execute anything and be a control
 # master.
 command="$command -- -NM"
+
 # remote ssh login name
-test "$profile_user" != "$LOGNAME" &&
-command="$command -l $profile_user"
+test "$user" != "$USER" &&
+command="$command -l $user"
+
 # remote ssh port
-test "$profile_port" != 22 &&
-command="$command -p $profile_port"
+test "$port" != 22 &&
+command="$command -p $port"
+
 # tunnels and extra arguments
-command="$command $profile_tunnels $profile_extra_args"
+command="$command $tunnels $extra_args"
+
 # remote host
-command="$command $profile_host"
+command="$command $host"
 
 # Log it
-log "+ $command"
+log "$command"
 
 if $command ; then
 	log "autossh is up"
 	exit 0
 else
 	result=$?
-	log "autossh failed with $result"
 	die "autossh failed with $result"
 fi

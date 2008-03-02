@@ -50,19 +50,6 @@ endif
 ifeq ($(uname_S),Linux)
 endif
 
-# Figure out if we have a bash -t capability to check script syntax.
-ifndef SHELL_T
-  ifdef BASH
-    SHELL_T = $(BASH) -t
-  else
-    ifeq ($(shell test $(SHELL_PATH) -t -c ':' 2>/dev/null && echo 't'),t)
-      SHELL_T = $(SHELL_PATH) -t
-    else
-      SHELL_T = true
-    endif
-  endif
-endif
-
 ifneq ($(findstring $(MAKEFLAGS),s),s)
 ifndef V
 	QUIET_SH       = @echo '   ' SH $@;
@@ -106,10 +93,10 @@ $(SCRIPTS) $(PROGRAMS): % : %.sh
 	    $@.sh >$@+ && \
 	chmod +x $@+ && \
 	chmod -w $@+ && \
-	$(SHELL_T) $@+ && \
-	mv $@+ $@
+	mv $@+ $@ && \
+	sh -n $@
 
-$(SCRIPTS) $(PROGRAMS): config.mak
+$(SCRIPTS) $(PROGRAMS): config.mak Makefile
 
 # ---- INSTALL TARGETS ----
 
