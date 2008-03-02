@@ -1,0 +1,208 @@
+#!/bin/sh
+# Hem tests
+set -e
+cd "$(dirname $0)"
+workdir="$(pwd)"
+HEM_EXEC="$workdir"
+HEM_CONFIG="$workdir/test/hem/config"
+
+export HEM_EXEC HEM_CONFIG
+
+# write output to log file
+LOG_FILE="$workdir/test.out"
+
+test "$1" = '-v' &&
+LOG=/dev/stderr ||
+LOG="$LOG_FILE"
+
+die() {
+	test -n "$current_test" &&
+	echo >&2 "test failure: $current_test"
+	echo >&2 'fatal:' "$@"
+	exit 1
+}
+
+info() {
+	echo "$@" >> $LOG
+}
+
+dot() {
+	test "$LOG" = "$LOG_FILE" &&
+	printf "."
+	return 0
+}
+
+summarize() {
+	printf "\n%d tests / %d assertions OK\n" $tests $assertions
+	return 0
+}
+
+tests=0
+current_test=
+begin_test() {
+	current_test="$1"
+	info "-----------------------------------------------------------------------------"
+	info "test: $current_test"
+}
+
+end_test() {
+	current_test=
+	tests=$(expr $tests + 1)
+	return 0
+}
+
+not() {
+	"$@" &&
+	return 1 ||
+	return 0
+}
+
+assertions=0
+assert() {
+	info "---> assert:" "$@"
+	if "$@" > 'test.stdout' 2> 'test.stderr' ; then
+		assertions=$((assertions + 1))
+		dot
+		cat 'test.stdout' 'test.stderr' >> $LOG
+	else
+		result=$?
+		echo
+		echo "test fail: $current_test"
+		echo "assertion:" "$@"
+		echo "status: $result"
+		echo "stderr:"
+		cat 'test.stderr'
+		echo "stdout:"
+		cat 'test.stdout'
+		exit 1
+	fi
+	return 0
+}
+
+teardown() {
+	rm -rf test test.stdout test.stderr test.out
+}
+
+setup() {
+	mkdir test
+	cd test
+}
+
+if [ -d "test" ] ; then
+	info "wiping out old test environment ..."
+	rm -rf $TEST_DIR
+fi
+
+if [ "$LOG_FILE" != "/dev/stderr" -a -f "$LOG_FILE" ] ; then
+	info "removing old test.out file ..."
+	rm $LOG_FILE
+fi
+
+info "creating test environment under $workdir/test ..."
+teardown ; setup
+
+begin_test "sanity"
+	assert true
+	assert not false
+	assert test 1 = 1
+	assert sh -c 'echo "foo bar" | grep -q foo'
+	assert ssh -V
+	assert not ssh --invalid-arg
+	assert sh -c 'ssh -V 2>&1 | grep OpenSSH'
+end_test
+
+SCRIPTS=
+for f in ../*.sh ;
+do
+	SCRIPTS="$(echo $f | sed 's/\.sh$//') $SCRIPTS"
+done
+
+begin_test "syntax checks"
+	for f in $SCRIPTS
+	do
+		assert sh -n "$f"
+	done
+end_test
+
+begin_test "usage checks"
+	for f in $SCRIPTS
+	do
+		assert "$f" --help
+	done
+end_test
+
+unset VISUAL
+export VISUAL
+EDITOR=echo
+export EDITOR
+
+begin_test "hem init tests"
+	assert hem init
+	assert test -d hem
+	assert test -f hem/config
+	assert sh hem/config
+	assert test -d hem/profile
+	assert test -d hem/run
+	assert not hem init
+	assert hem init --force
+	assert hem init -d ./hem2
+	assert test -d hem2
+	assert test -f hem2/config
+	assert sh hem2/config
+	assert test -d hem2/profile
+	assert test -d hem2/run
+	assert hem init --base-dir hem2 -f -e
+	assert rm -rf hem2
+end_test
+
+begin_test "hem status tests"
+	# no profiles defined, we should pass though
+	assert hem status
+	assert hem status all
+	touch hem/profile/$USER@localhost
+	assert hem status all
+	assert not hem status --check all
+	# quick check to see if quiet is propogating properly
+	assert test $(hem status all | wc -l) = 1
+	assert test $(hem --quiet status all | wc -l) = 0
+	echo "$$" > hem/run/$USER@localhost.pid
+	assert hem status $USER@localhost
+	assert hem status --check $USER@localhost
+	assert test $(hem status -p $USER@localhost) = $$
+	# test with bad pid
+	touch hem/profile/$USER@127.0.0.1
+	echo "0" > hem/run/$USER@127.0.0.1.pid
+	assert hem status $USER@127.0.0.1
+	assert not hem status --check $USER@127.0.0.1
+	# should not write pid if its not running
+	assert test -z "$(hem status -p $USER@127.0.0.1)"
+end_test
+
+begin_test "hem info tests"
+	# no profiles defined, we should pass though
+	assert hem info
+	assert hem info -f $USER@localhost
+	assert hem info -F $USER@localhost
+	assert hem info -m $USER@localhost
+	assert hem info -p $USER@localhost
+	assert hem info -r $USER@localhost
+	assert hem info -t $USER@localhost
+	assert hem info -u $USER@localhost
+	assert [ $(hem info -p $USER@localhost) = 22 ]
+	assert [ $(hem info -t $USER@localhost) = localhost ]
+	assert [ $(hem info -u $USER@localhost) = $USER ]
+	touch hem/profile/foo@localhost.local:35
+	assert hem info -f foo@localhost.local:35
+	assert hem info -F foo@localhost.local:35
+	assert hem info -m foo@localhost.local:35
+	assert hem info -r foo@localhost.local:35
+	assert [ $(hem info -p foo@localhost.local:35) = 35 ]
+	assert [ $(hem info -t foo@localhost.local:35) = localhost.local ]
+	assert [ $(hem info -u foo@localhost.local:35) = foo ]
+end_test
+
+summarize
+finished=1
+exit 0
+
+# vim: ts=4 shiftwidth=4 noexpandtab

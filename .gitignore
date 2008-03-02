@@ -9,3 +9,7 @@ hem-up
 hem-sh-setup
 hem-push-keys
 config.mak
+test.out
+test.stdout
+test.stderr
+test
