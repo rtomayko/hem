@@ -1,6 +1,6 @@
 #!/bin/sh
-set -e
-USAGE="[<opts>] <profile>...
+set -eu
+USAGE="[<options>] <profile>...
 Output configuration information for <profile>.
 
 The following options, when provided, cause each configuration item to
@@ -15,7 +15,7 @@ be output on a separate line in the order given.
   -u, --user            output remote user login.
       --help            display help and exit.
 
-With no OPTIONS, write the entire profile configuration to standard
+With no <options>, write the entire profile configuration to standard
 output in a format suitable for eval'ing into a shell."
 
 . hem-sh-setup

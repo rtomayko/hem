@@ -152,7 +152,7 @@ profile_path() {
 #
 # Check that a profile exists.
 profile_exist() {
-	test -r "$(profile_path $1)" &&
+	test -f "$(profile_path $1)" &&
 	return 0 ||
 	return 1
 }

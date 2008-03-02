@@ -56,7 +56,7 @@ quiet=
 verbose=
 
 # commands that do not require valid profile names as arguments.
-simple_commands="init manage"
+simple_commands="init manage help"
 
 # with no arguments, bail out with usage
 if [ $# -eq 0 ] ; then

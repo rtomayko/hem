@@ -201,6 +201,15 @@ begin_test "hem info tests"
 	assert [ $(hem info -u foo@localhost.local:35) = foo ]
 end_test
 
+
+begin_test "hem manage tests"
+	# no profiles defined, we should pass though
+	assert hem manage -A foo.com
+	assert test -f hem/profile/foo.com
+	assert test "$(wc -l < hem/profile/foo.com)" -gt 0
+	assert sh -n hem/profile/foo.com
+end_test
+
 summarize
 finished=1
 exit 0

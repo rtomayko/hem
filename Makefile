@@ -53,6 +53,7 @@ endif
 ifneq ($(findstring $(MAKEFLAGS),s),s)
 ifndef V
 	QUIET_SH       = @echo '   ' SH $@;
+	QUIET_TEST     = @echo '   ' TEST;
 	QUIET_SUBDIR0  = +@subdir=
 	QUIET_SUBDIR1  = ;$(NO_SUBDIR) echo '   ' SUBDIR $$subdir; \
 			 $(MAKE) $(PRINT_DIR) -C $$subdir
@@ -71,6 +72,7 @@ SCRIPT_SH = \
 	hem-down.sh \
 	hem-info.sh \
 	hem-init.sh \
+	hem-manage.sh \
 	hem-push-keys.sh \
 	hem-sh-setup.sh \
 	hem-status.sh \
@@ -119,17 +121,23 @@ DISTFILES = \
 	$(DOCFILES) \
 	Makefile
 
-$(DIST_TAR_GZ): $(SCRIPTS)
+$(DIST_TAR_GZ): $(SCRIPTS) $(PROGRAMS)
 	$(TAR) czf $@ $(DISTFILES)
 
 dist: $(DIST_TAR_GZ)
 
+# ---- TESTING ----
+
+test.out: $(SCRIPTS) $(PROGRAMS) test-sh
+	$(QUIET_TEST) sh test-sh
+
+test: test.out
 
 # ---- MISC TARGETS ----
 
 # make all repeatedly (useful for development)
 auto:
-	@while true ; do $(MAKE) | grep -v 'Nothing to be done' ; sleep 1 ; done
+	@while true ; do $(MAKE) test | grep -v 'Nothing to be done' ; sleep 1 ; done
 
 clean:
 	$(RM) $(SCRIPTS)
@@ -141,7 +149,7 @@ config:
 	@echo perl = $(PERL)
 	@echo BUILD_AUTOSSH = $(BUILD_AUTOSSH)
 
-.PHONY : all clean dist install auto config
+.PHONY : all clean dist install auto config test
 
 FORCE:
 
