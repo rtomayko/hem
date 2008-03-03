@@ -1,7 +1,7 @@
 #!/bin/sh
-set -eu
+set -e
 hem_dir=$(echo $(dirname $HEM_CONFIG) | sed "s|^$HOME|~|")
-USAGE="[-e] [-f] [-d <dir>]
+USAGE="[-e][-f][-d <dir>]
 Create a configuration directory structure in $hem_dir or the directory
 specified in -c <dir>.
 
@@ -20,7 +20,6 @@ The following files and directories are created:
 # parse arguments
 force=
 editconfig=
-echo args: "$@"
 while [ $# -gt 0 ]; do
 case "$1" in
 	-d|--base-dir)

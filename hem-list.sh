@@ -1,5 +1,5 @@
 #!/bin/sh
-set -eu
+set -e
 USAGE="
 Write available profiles to stdout."
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-set -eu
+set -e
 USAGE="[-s <sig>] <profile>...
 Take down one or more connections or send them a specific kill signal.
 

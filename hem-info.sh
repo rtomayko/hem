@@ -1,5 +1,5 @@
 #!/bin/sh
-set -eu
+set -e
 USAGE="[<options>] <profile>...
 Output configuration information for <profile>.
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-set -eu
+set -e
 USAGE="[-f] <profile>...
 Bring up one or more connection profiles.
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-set -eu
+set -e
 USAGE="[-c][-p] <profile>...
 Show connection status information for <profile>; or, if a single <profile>
 'all' is supplied, show status of all connections.

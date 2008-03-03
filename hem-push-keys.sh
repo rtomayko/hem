@@ -1,5 +1,5 @@
 #!/bin/sh
-set -eu
+set -e
 USAGE="<profile>...
 Authorize your public key on the remote host."
 

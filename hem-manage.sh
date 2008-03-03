@@ -1,5 +1,5 @@
 #!/bin/sh
-set -eu
+set -e
 USAGE="[-A][-e] <profile>...
 Create connection
 

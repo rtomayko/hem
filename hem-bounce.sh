@@ -1,5 +1,5 @@
 #!/bin/sh
-set -eu
+set -e
 USAGE="<profile>...
 Restart the ssh connection for <profile>."
 

@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-set -eu
+set -e
 
 USAGE="[-q][-v][-c <file>] <command> [<opt>]... [<profile>]...
 Hem is an ssh controller and automatic tunnel daemon.
