@@ -1,5 +1,5 @@
 #!/bin/sh
-# set -e
+set -e
 
 cd $(dirname $0)
 rm -f config.mak
@@ -27,9 +27,11 @@ die() {
 SYSTEM=${SYSTEM:-$(uname -s 2>/dev/null || echo unknown)}
 echo "configuring for ${SYSTEM} ..."
 
+set +e
 SSH=${SSH:-$(command -v ssh)}
 PERL=${PERL:-$(command -v perl)}
 AUTOSSH=${AUTOSSH:-$(command -v autossh)}
+set -e
 
 BUILD_AUTOSSH=$(test -n "$AUTOSSH" && echo no || echo yes)
 
@@ -106,14 +108,14 @@ DOCDIR=${DOCDIR:-$PREFIX/share/doc}
 MANDIR=${MANDIR:-$PREFIX/share/man}
 
 # path to ssh
-echo -n "checking for ssh..."
+printf "checking for ssh..."
 test -n "$SSH" && echo " yes [$SSH]" || {
 	echo " FAIL"
 	die "ssh not found."
 }
 
 # path to perl
-echo -n "checking for perl..."
+printf "checking for perl..."
 test -n "$PERL" && echo " yes [$PERL]" || {
 	echo " FAIL"
 	die "perl not found."
@@ -122,10 +124,10 @@ test -n "$PERL" && echo " yes [$PERL]" || {
 # path to autossh
 if [ $BUILD_AUTOSSH = no ]; then
 	# path to autossh
-	echo -n "checking for autossh..."
+	printf "checking for autossh..."
 	if test -n "$AUTOSSH" ; then
 		echo " yes [$AUTOSSH]"
-		AUTOSSH_VERS=$($AUTOSSH -V 2>/dev/null)
+		AUTOSSH_VERS=$($AUTOSSH -V 2>/dev/null || true)
 		case "$AUTOSSH_VERS" in
 			'autossh 1.4') ;;
 			"autossh 1.4a") ;;
@@ -149,7 +151,7 @@ fi
 
 # path to autossh
 
-echo -n "writing config to config.mak... "
+printf "writing config to config.mak... "
 cat <<EOF > ./config.mak
 prefix = $PREFIX
 bindir = $BINDIR
@@ -164,6 +166,7 @@ SSH = $SSH
 PERL = $PERL
 EOF
 
+echo
 echo "done."
 
 exit 0

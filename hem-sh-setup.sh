@@ -40,7 +40,7 @@ see_usage() {
 	exit 1
 }
 
-if [ $# -gt 0 ] && [ "$1" == '--help' ] ; then
+if [ $# -gt 0 ] && [ "$1" = '--help' ] ; then
 	usage
 	exit 0
 fi
