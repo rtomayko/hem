@@ -1,4 +1,5 @@
 #!/bin/sh
+# set -e
 
 cd $(dirname $0)
 rm -f config.mak
@@ -17,14 +18,20 @@ CFLAGS_EXE='-o '
 LDFLAGS='-L.'
 LDFLAGS_ADD=''
 
+
+die() {
+	echo >&2 "$(basename $0): fatal:" "$@"
+	exit
+}
+
 SYSTEM=${SYSTEM:-$(uname -s 2>/dev/null || echo unknown)}
 echo "configuring for ${SYSTEM} ..."
 
-SSH=${SSH:-$(type -p ssh)}
-PERL=${PERL:-$(type -p perl)}
-AUTOSSH=${AUTOSSH:-$(type -p autossh)}
+SSH=${SSH:-$(command -v ssh)}
+PERL=${PERL:-$(command -v perl)}
+AUTOSSH=${AUTOSSH:-$(command -v autossh)}
 
-BUILD_AUTOSSH=$(test $AUTOSSH && echo no || echo yes)
+BUILD_AUTOSSH=$(test -n "$AUTOSSH" && echo no || echo yes)
 
 while test $# -ge 1; do
 case "$1" in
@@ -102,14 +109,14 @@ MANDIR=${MANDIR:-$PREFIX/share/man}
 echo -n "checking for ssh..."
 test -n "$SSH" && echo " yes [$SSH]" || {
 	echo " FAIL"
-	exit 1
+	die "ssh not found."
 }
 
 # path to perl
 echo -n "checking for perl..."
 test -n "$PERL" && echo " yes [$PERL]" || {
 	echo " FAIL"
-	exit 1
+	die "perl not found."
 }
 
 # path to autossh
@@ -126,6 +133,7 @@ if [ $BUILD_AUTOSSH = no ]; then
 		esac
 	else
 		echo " FAIL"
+		die "autossh not found and you chose not to build it."
 	fi
 else
 	echo "configuring autossh for install at $PREFIX/bin/autossh"
@@ -134,8 +142,7 @@ else
 	if ./configure --prefix="$PREFIX" --with-ssh="$SSH"; then
 		echo "autossh configured successfully..."
 	else
-		echo "could not configure autossh..."
-		exit 1
+		die "could not configure autossh."
 	fi
 	cd ..
 fi
