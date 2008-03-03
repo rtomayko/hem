@@ -2,8 +2,8 @@
 set -e
 hem_dir=$(echo $(dirname $HEM_CONFIG) | sed "s|^$HOME|~|")
 USAGE="[-e][-f][-d <dir>]
-Create a configuration directory structure in $hem_dir or the directory
-specified in -c <dir>.
+Create a configuration directory structure in $hem_dir or the <dir>
+given to --base-dir.
 
   -d, --base-dir <dir>  override default config directory
   -e, --edit            open an editor on the config file after creating

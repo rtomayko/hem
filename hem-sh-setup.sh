@@ -110,14 +110,14 @@ tildize() {
 # TODO: this is pretty much insane. there's gotta be a better way of
 # pulling these pieces apart.
 remote_part() {
-	if [ $(expr "$1" : '.*@') -gt 0 ]; then
+	if [ $(expr -- "$1" : '.*@') -gt 0 ]; then
 		remote_user=$(echo "$1" | sed 's/\(.*\)@.*/\1/')
 		remote_host=$(echo "$1" | sed 's/.*@\(.*\)/\1/')
 	else
 		remote_user="$USER"
 		remote_host="$1"
 	fi
-	if [ $(expr "$remote_host" : '.*:') -gt 0 ]; then
+	if [ $(expr -- "$remote_host" : '.*:') -gt 0 ]; then
 		remote_port=$(echo "$remote_host" | sed 's/.*:\(.*\)/\1/')
 		remote_host=$(echo "$remote_host" | sed 's/\(.*\):.*/\1/')
 	else
@@ -140,7 +140,7 @@ remote_part() {
 # Most profile_XXX functions call this when they indicate a <profile>
 # argument.
 profile_path() {
-	if [ "$(expr "$1" : '\/')" = 1 ] ; then
+	if [ "$(expr -- "$1" : '\/')" = 1 ] ; then
 		echo "$1"
 	else
 		echo "$profile_dir"/"$1"
@@ -231,7 +231,7 @@ forward() {
 	tunnels="$tunnels -L$1"
 	shift
 	[ "$1" = "to" ] && shift
-	[ $(expr "$1" : '.*:') -gt 0 ] &&
+	[ $(expr -- "$1" : '.*:') -gt 0 ] &&
 	tunnels="$tunnels:$1" ||
 	tunnels="$tunnels:localhost:$1"
 	return 0
@@ -249,7 +249,7 @@ backward() {
 	tunnels="$tunnels -R$1"
 	shift
 	[ "$1" = "to" ] && shift
-	[ $(expr "$1" : '.*:') -gt 0 ] &&
+	[ $(expr -- "$1" : '.*:') -gt 0 ] &&
 	tunnels="$tunnels:$1" ||
 	tunnels="$tunnels:localhost:$1"
 	return 0

@@ -30,7 +30,7 @@ case "$1" in
 esac
 done
 
-test $(expr "$sig" : '\-') = 1 ||
+test $(expr -- "$sig" : '\-') = 1 ||
 sig="-$sig"
 
 # bring in profile settings
