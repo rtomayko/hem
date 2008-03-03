@@ -23,15 +23,15 @@ info "authorizing on $remote ($(tildize "$public_key_file"))"
 public_key="$(cat $public_key_file)"
 ssh -l $user -p $port $host '/bin/sh -f' <<EOF
 	set -e
-	test -d ~/.ssh || {
+	test -d "\$HOME/.ssh" || {
 		mkdir ~/.ssh &&
 		chmod 0700 ~/.ssh
 	}
-	if test ! -f ~/.ssh/authorized_keys ||
-	   test -z "\$(grep -F '$public_key' ~/.ssh/authorized_keys)" ;
+	if test ! -f "\$HOME/.ssh/authorized_keys" ||
+	   test -z "\$(grep -F '$public_key' "\$HOME/.ssh/authorized_keys")" ;
 	then
 		echo "+++ public key added"
-		echo '$public_key' >> ~/.ssh/authorized_keys
+		echo '$public_key' >> "\$HOME/.ssh/authorized_keys"
 		exit 0
 	else
 		echo "+++ public key already authorized."

@@ -163,7 +163,7 @@ profile_exist() {
 # defaults.
 profile_load() {
 	profile_file=$(profile_path $1)
-	profile_name=$(basename $profile_file)
+	profile_name=$(basename "$profile_file")
 
 	# unset all profile variables
 	for i in host port user remote pidfile statefile monitor_port tunnels \
