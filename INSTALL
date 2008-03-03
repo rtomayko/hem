@@ -7,6 +7,11 @@ For most systems, you should be able to just do the usual:
         $ make
         # make install      ;# as root
 
+IMPORTANT: Hem requires GNU Make. If you're running on FreeBSD or a system with
+a non-GNU make, you will likely have to use the "gmake" command instead of
+"make" where specified above. If you're not sure, run 'make --version'; you
+should see the GNU Make version and a copyright notice.
+
 By default, the program is installed to `/usr/local/bin`. You
 can override the various install locations by passing them along the
 `make` command line. For a home install, try:
