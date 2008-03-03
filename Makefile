@@ -128,6 +128,14 @@ $(HEM_TAR_NAME).cksums: $(HEM_TAR_NAME).tar.gz
 
 dist: $(HEM_TAR_NAME).tar.gz $(HEM_TAR_NAME).cksums
 
+# This hideous mess bumps the release version number in the VERSION
+# file. I use it like this: make bump && make release
+bump:
+	@version=`cat VERSION | sed 's/.*\..*\.\(.*\)/\1/'`; \
+	version=`expr $$version + 1`; \
+	cat VERSION | sed "s/\(.*\)\.\(.*\)\..*/\1.\2.$$version/" > VERSION+ && \
+	mv VERSION+ VERSION
+
 release: $(HEM_TAR_NAME).tar.gz $(HEM_TAR_NAME).cksums
 	$(Q)ssh tomayko.com "mkdir -p /dist/hem"
 	$(Q)rsync -aP $(HEM_TAR_NAME).tar.gz $(HEM_TAR_NAME).cksums \
@@ -150,15 +158,13 @@ auto:
 	done
 
 clean:
-	$(Q)$(RM) $(SCRIPTS)
-	$(Q)$(RM) $(PROGRAMS)
-	$(Q)$(RM) $(patsubst %.sh,%+,$(SCRIPT_SH))
-	$(Q)$(RM) test.out test.stdout test.stderr
+	$(Q)$(RM) $(SCRIPTS) $(PROGRAMS) $(patsubst %.sh,%+,$(SCRIPT_SH)) \
+	          test.out test.stdout test.stderr
 	$(Q)$(RM) -r test
 
 distclean: clean
-	$(Q)$(RM) $(HEM_TAR_NAME)
-	$(Q)$(RM) $(HEM_TAR_NAME).tar.gz
+	$(Q)$(RM) config.mak $(HEM_TAR_NAME) $(HEM_TAR_NAME).tar.gz \
+	          $(HEM_TAR_NAME).cksums
 
 config:
 	@echo prefix = $(prefix)
