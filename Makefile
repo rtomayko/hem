@@ -36,11 +36,9 @@ ifeq ($(uname_S),FreeBSD)
 endif
 
 ifeq ($(uname_S),Darwin)
-	SHELL_PATH = $(BASH)
 endif
 
 ifeq ($(uname_S),SunOS)
-	SHELL_PATH = $(BASH)
 	INSTALL = ginstall
 	TAR = gtar
 endif
