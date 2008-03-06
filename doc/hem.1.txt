@@ -1,70 +1,191 @@
 HEM(1)
 ======
-Ryan Tomayko <rtomayko@gmail.com>
-
+Ryan Tomayko <r@tomayko.com>
 
 NAME
 ----
-hem - persistent ssh(1) connection and tunnel manager.
-
+hem - Persistent SSH connection and tunnel manager.
 
 SYNOPSIS
 --------
-'hem' [<opt>] <command> [<opt>] [<profile>...]
-
-'hem' init [-e] [-f]
-
-'hem' info [<opt>]
-
-'hem' up [<profile>...]
-
-'hem' down [-<sig>] [<profile>...]
-
-'hem' bounce [<profile>...]
-
-'hem' status [-p] [-c] [<profile>...]
-
+[verse]
+`hem` [`-qv`] [`-c` 'config_file'] 'command' ['command_options'] ['profile'...]
+`hem` `init` [`-ef`] [`-d` 'dir']
+`hem` `manage` [`-Ae`] 'profile'...
+`hem` `status` [`-cp`] 'profile'...
+`hem` `up` [`-fp`] 'profile'...
+`hem` `down` [`-s` 'sig'] 'profile'...
+`hem` `bounce` 'profile'...
+`hem` `info` ['options'] 'profile'...
 
 DESCRIPTION
 -----------
-The hem(1) program manages multiple persistent ssh connections using an
-'ifconfig' / 'rc' style interface.
 
+`Hem` manages multiple background SSH connections using an man:ifconfig[8] /
+man:rc[8] style interface. The `hem` program is a front-end to multiple
+sub-commands: `init`, `manage`, `status`, `up`, `down`, `bounce`, and `info`.
+See the *HEM COMMANDS* section below for a description of each command.
+
+When `hem` is invoked, it reads configuration information from *~/.hem/config*,
+or the file specified by the `--config` argument, or the value of the
+`HEM_CONFIG` environment variable. See manlocal:hem_config[5] for information on
+configuration values.
 
 OPTIONS
 -------
--q, --quiet::
-        Do not write any non-critical output to 'stdout' / 'stderr'. By
-        default, hem(1)
+-c, --config 'config_file'::
+	Load configuration from 'config_file' instead of the default configuration
+	file location. The configuration file specifies the location of hem
+	profiles and various other options that control its operation.
+	See manlocal:hem_config[5] for more information on configuration options and
+	format.
 
--c, --config <file>::
-        Load configuration from '<file>' instead of the default configuration
-        file location.
+-q, --quiet::
+	Do not write any non-critical output to *stdout* / *stderr*. Without the
+	`--quiet` option, `hem` will write a small bit of informational
+	output to *stderr* on what its doing.
+
+-v, --verbose::
+	Write verbose messages typical reserved for the log to *stderr* in
+	addition to normal informational output.
 
 --help::
-        Print help TOPIC. '--help topics' will print a list of help
-        topics, `--help syntax` summarizes AsciiDoc syntax, `--help
-        manpage` prints the AsciiDoc manpage.
+	Show program usage and exit.
+
+HEM COMMANDS
+------------
+Each hem sub-command is fully documented under its own manual page:
+
+manlocal:hem-init[1]::
+	Initialize a new configuration directory (`~/.hem` by default) and
+	check that ssh configuration is amenable to use with Hem.
+
+manlocal:hem-manage[1]::
+	Add a new connection profile and optionally authorize with the
+	remote host. This command can also be used to edit existing profiles.
+
+manlocal:hem-info[1]::
+	Show configuration information for one or more profiles.
+
+manlocal:hem-status[1]::
+	Show connection status for one or more profiles.
+
+manlocal:hem-up[1]::
+	Bring connections up for one or more profiles.
+
+manlocal:hem-down[1]::
+	Take connections down for one or more profiles.
+
+manlocal:hem-bounce[1]::
+	Restart or reload the connection for one or more profiles.
+
+CONNECTION PROFILES
+-------------------
+
+All hem commands -- with the exception of manlocal:hem-init[1] -- operate on
+one or more connection 'profiles'. Each 'profile' is represented by a file in
+the profiles directory: *~/.hem/profile* (this can be overridden by setting
+the `profile_dir` variable in manlocal:hem_config[5]).
+
+A connection profile includes configuration for a single remote SSH
+connection. The profile filename is used to provide a minimal amount of
+connection information and is named similar to an SSH remote specifier:
+['user'@]{empty}'hostname'[:'port']. For example, you may have profiles named
+*example.com*, *root@example.com*, and *toor@example.com:522*.
+
+EXAMPLES
+--------
+Use the manlocal:hem-init[1] command to initialize a new configuration
+directory:
+
+	$ hem init
+
+Add a connection profile for *example.com* with manlocal:hem-manage[1] using
+your current username (`USER` environment variable), and another connection
+profile for *legends.org* with the username *turing*:
+
+	$ hem manage example.com turing@legends.org
+	writing ~/.hem/profile/example.com
+	authorizing on example.com (~/.ssh/id_dsa.pub)
+	Password: *************
+	+++ public key added
+	writing ~/.hem/profile/turing@legends.org
+	authorizing on turing@legends.org (~/.ssh/id_dsa.pub)
+	Password: *************
+	+++ public key added
+
+Note that, by default, manlocal:hem-manage[1] will attempt to connect to the
+remote host and add authorize your public key for future sessions. You may be
+prompted for your remote password.
+
+Use manlocal:hem-status[1] to check connection state:
+
+	$ hem status
+	example.com                    down
+	turing@legends.org             down
+
+Bring up connection to *legends.org* only using manlocal:hem-up[1]:
+
+	$ hem up turing@legends.org
+	bringing up: turing@legends.org
+
+Check connection status, again:
+
+	$ hem status
+	example.com                    down
+	turing@legends.org             up            5432
+
+Bring up all connections:
+
+	$ hem up
+	bringing up: example.com
+	turing@legends.org is already up
+
+Check connection status, again:
+
+	$ hem status
+	example.com                    up            5433
+	turing@legends.org             up            5432
+
+Take all connections down with manlocal:hem-down[1]:
+
+	$ hem down
+	taking down: example.com (pid: 5433)
+	taking down: turing@legends.org (pid: 5432)
 
 
-BUGS
-----
-None.
+ENVIRONMENT VARIABLES
+---------------------
 
+`HEM_CONFIG`::
+        If `HEM_CONFIG` is set, `hem` uses it as the location of the
+        global configuration file. It overrides the default configuration
+        file location (*~/.hem/config*), but is overridden by the `-c`
+        invocation option.
+
+`HEM_EXEC`::
+        The path to hem executables.
+
+SEE ALSO
+--------
+
+manlocal:hem_config[5], man:ssh[1], man:ssh-agent[1], man:ssh_config[5].
 
 AUTHOR
 ------
-Ryan Tomayko <mailto:rtomayko@gmail.com[]>
-
+Written by http://tomayko.com/[Ryan Tomayko] <r@tomayko.com>
 
 RESOURCES
 ---------
-Web Site: http://tomayko.com/src/hem/
+Web Site
+http://tomayko.com/src/hem/[]
 
-Project Page: http://github.com/rtomayko/hem/
-
+Project Page
+http://github.com/rtomayko/hem/[]
 
 COPYING
 -------
 Copyright \(C) 2008, Ryan Tomayko. Free use of this software is
 granted under the terms of the New and Simplified BSD License.
+
+// vim: tw=78 ts=4 sts=0 noexpandtab

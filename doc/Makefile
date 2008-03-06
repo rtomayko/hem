@@ -1,49 +1,45 @@
-DOCFILES = doc/hem.1.txt
+all::
 
-XMLFILES = doc/hem.1.xml
+# Read version in from VERSION file.
+HEM_VERSION := $(shell cat ../VERSION)
 
-MANFILES = man/hem.1
+DOCFILES =   hem.1.txt
+XMLFILES =   hem.1.xml
+MANFILES =   hem.1
+HTMLFILES =  hem.1.html
 
-HTMLFILES = doc/hem.1.html
+SRCS =       $(DOCFILES)
+TARGETS =    $(MANFILES) $(HTMLFILES)
+INTERS =     $(XMLFILES)
 
-CLEAN = $(MANFILES) $(HTMLFILES) $(XMLFILES) man
+ASCIIDOC = asciidoc --unsafe \
+		            -a stylesdir=$(shell pwd)/stylesheets \
+		            -a theme=bare \
+		            -a hem_version=$(HEM_VERSION)
 
-DISTCLEAN = $(XMLFILES)
+A2X = a2x --xsltproc-opts='--catalogs --nonet --novalid'
 
-DISTFILES = $(BINFILES) $(DOCFILES) $(MANFILES) $(HTMLFILES)
+man: $(MANFILES)
 
-.PHONY : all clean dist check-sh-syntax doc
+html: $(HTMLFILES)
 
-all:: $(BINFILES) $(MANFILES) $(HTMLFILES)
+doc: man html
 
-dist: dist/$(NAME)-$(VERS).tar.gz
+all:: doc
 
-dist/$(NAME)-$(VERS).tar.gz: $(DISTFILES)
-	$(mkdir) dist
-	$(tar) cvzf $@ $(DISTFILES)
-
-check-sh-syntax: $(BINFILES)
-	for f in $(BINFILES) ; do bash -t $f ; done
-
-doc: $(MANFILES) $(HTMLFILES)
-
-manpages: man $(MANFILES)
-
-man:
-	mkdir -p man
-
-$(MANFILES): man/%.1: doc/%.1.txt man
-	a2x -d manpage -f manpage -D man $<
+$(MANFILES): %.1: %.1.txt
+	$(A2X) -d manpage -f manpage -D . $<
 
 $(HTMLFILES): %.1.html: %.1.txt
-	asciidoc -d manpage $<
+	$(ASCIIDOC) -d manpage -f manpage.conf $<
+
+$(MANFILES) $(HTMLFILES): asciidoc.conf
 
 clean:
-	rm -rf $(CLEAN)
-
-distclean:
-	rm -rf $(DISTCLEAN)
+	rm -rf $(MANFILES) $(HTMLFILES) $(XMLFILES)
 
 FORCE:
+
+.PHONY: clean manpages doc html all
 
 # vim: set ts=8
