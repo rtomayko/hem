@@ -177,4 +177,38 @@ pre {
 	text-transform:uppercase
 }
 
+/* Hem customizations */
+
+body {
+	color:#445;
+}
+
+strong {
+	font-weight:normal;
+	color:#000
+}
+
+a, a:link, a:visited {
+	color:#225;
+}
+
+a:hover {
+	color:#000;
+	background:#ddf;
+}
+
+a.manpage, a.manpage:link, a.manpage:visited {
+	text-decoration:none;
+	font-weight:bold;
+	color:#272;
+}
+
+a.manpage:hover {
+	background:#dfd;
+}
+
+pre tt {
+	font-weight:normal;
+}
+
 /* vim: set ft=css ts=4 sw=4 noexpandtab: */

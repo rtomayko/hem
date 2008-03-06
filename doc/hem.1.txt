@@ -158,13 +158,36 @@ ENVIRONMENT VARIABLES
 ---------------------
 
 `HEM_CONFIG`::
-        If `HEM_CONFIG` is set, `hem` uses it as the location of the
-        global configuration file. It overrides the default configuration
-        file location (*~/.hem/config*), but is overridden by the `-c`
-        invocation option.
+	If `HEM_CONFIG` is set, `hem` uses it as the location of the
+	global configuration file. It overrides the default configuration
+	file location (*~/.hem/config*), but is overridden by the `-c`
+	invocation option.
 
 `HEM_EXEC`::
-        The path to hem executables.
+	The path to hem executables.
+
+FILES
+-----
+
+*~/.hem/config*::
+	This is the default per user configuration file. The settings in
+	this file provide defaults for all connection profiles. Available
+	configuration variables are described in the manlocal:hem_config[5]
+	manual page.
+
+*~/.hem/profile*::
+	The default hem connection profile directory. Each file contains
+	configuration for an individual remote SSH connection. Available
+	configuration variables are described in the manlocal:hem_profile[5]
+	manual page.
+
+*~/.hem/run*::
+	Hem stores *.pid* files for running connections in this directory by
+	default. The location of this directory can be configured by setting
+	the `run_dir` option. See manlocal:hem_config[5] for more information.
+
+*~/.hem/log*::
+	Hem logs messages here if no `log_to` option has been specified.
 
 SEE ALSO
 --------
@@ -188,4 +211,4 @@ COPYING
 Copyright \(C) 2008, Ryan Tomayko. Free use of this software is
 granted under the terms of the New and Simplified BSD License.
 
-// vim: tw=78 ts=4 sts=0 noexpandtab
+// vim: tw=78 ts=8 sts=0 noexpandtab
