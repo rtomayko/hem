@@ -20,7 +20,7 @@
 set -e
 
 USAGE="[-q][-v][-c <file>] <command> [<opt>]... [<profile>]...
-Hem is an ssh controller and automatic tunnel daemon.
+Hem is an ssh controller and tunnel manager.
 
 Available commands:
   init                  initialize the ~/.hem directory
