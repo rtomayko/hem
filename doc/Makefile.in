@@ -1,0 +1,88 @@
+all::
+
+NAME = @PACKAGE_NAME@
+TARNAME = @PACKAGE_TARNAME@
+VERSION  = @PACKAGE_VERSION@
+
+srcdir      = @srcdir@
+prefix      = @prefix@
+exec_prefix = @exec_prefix@
+bindir      = @bindir@
+libexecdir  = @libexecdir@
+datarootdir = @datarootdir@
+datadir     = @datadir@
+mandir      = @mandir@
+man1dir     = $(mandir)/man1
+man5dir     = $(mandir)/man5
+
+docdir = $(datadir)/doc/$(TARNAME)
+
+SHELL = /bin/sh
+RM = rm -f
+TAR = tar
+INSTALL = @INSTALL@
+INSTALL_DIR = $(INSTALL) -d -m 755
+INSTALL_DATA = @INSTALL_DATA@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+
+DOCFILES =      hem.1.txt hem_config.5.txt index.txt
+MAN1FILES =     hem.1
+MAN5FILES =     hem_config.5
+SITEHTMLFILES = index.html
+
+MANFILES =      $(MAN1FILES) $(MAN5FILES)
+MANXMLFILES =   $(foreach f,$(MANFILES),$(f).xml)
+MANHTMLFILES =  $(foreach f,$(MANFILES),$(f).html)
+
+HTMLFILES =     $(MANHTMLFILES) $(SITEHTMLFILES)
+
+SRCS =          $(DOCFILES)
+TARGETS =       $(MANFILES) $(HTMLFILES)
+AUX =           $(XMLFILES)
+
+ASCIIDOC = asciidoc --unsafe \
+		     -a stylesdir=./stylesheets \
+		     -a linkcss= \
+		     -a theme=bare \
+		     -a hem_version=$(VERSION)
+
+A2X = a2x --xsltproc-opts='--nonet --novalid'
+
+man: $(MANFILES)
+
+html: $(HTMLFILES)
+
+doc: man html
+
+all:: doc
+
+$(MANFILES): %: %.txt
+	$(Q)$(A2X) -d manpage -f manpage -D . $<
+	-$(Q)$(RM) $(MANXMLFILES)
+
+$(MANHTMLFILES): %.html: %.txt
+	$(Q)$(ASCIIDOC) -d manpage $<
+
+$(SITEHTMLFILES): %.html: %.txt
+	$(Q)$(ASCIIDOC) -o $@ $<
+
+$(MANFILES) $(HTMLFILES): asciidoc.conf
+
+$(SITEHTMLFILES): xhtml11-article.conf
+
+$(MANHTMLFILES): xhtml11-manpage.conf
+
+install-man: $(MANFILES)
+	@-$(INSTALL_DIR) '$(DESTDIR)$(man1dir)'
+	@$(INSTALL_DATA) $(MAN1FILES) '$(DESTDIR)$(man1dir)'
+	@-$(INSTALL_DIR) '$(DESTDIR)$(man5dir)'
+	@$(INSTALL_DATA) $(MAN5FILES) '$(DESTDIR)$(man5dir)'
+
+clean:
+	$(Q)$(RM) -r $(HTMLFILES) $(XMLFILES) $(MANFILES)
+
+FORCE:
+
+.PHONY: clean man doc html all
+
+# vim: set ts=8

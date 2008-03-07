@@ -1,0 +1,170 @@
+# The default target...
+all::
+
+NAME = @PACKAGE_NAME@
+TARNAME = @PACKAGE_TARNAME@
+VERSION  = @PACKAGE_VERSION@
+
+srcdir      = @srcdir@
+prefix      = @prefix@
+exec_prefix = @exec_prefix@
+bindir      = @bindir@
+libexecdir  = @libexecdir@
+datarootdir = @datarootdir@
+datadir     = @datadir@
+mandir      = @mandir@
+
+docdir = $(datadir)/doc/$(TARNAME)
+
+export prefix exec_prefix bindir libexecdir libdir mandir datadir docdir
+
+SHELL = /bin/sh
+SHELL_PATH = /bin/sh
+RM = rm -f
+TAR = tar
+INSTALL = @INSTALL@
+INSTALL_DIR = $(INSTALL) -d -m 755
+INSTALL_DATA = @INSTALL_DATA@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+PERL = @PERL@
+SSH = @SSH@
+AUTOSSH = @AUTOSSH@
+
+# ---- END OF CONFIGURATION ----
+
+ifneq ($(findstring $(MAKEFLAGS),s),s)
+ifndef V
+	Q              = @
+	QUIET_SH       = @echo '   ' SH $@;
+	QUIET_GEN      = @echo '   ' GEN $@;
+	QUIET_TEST     = @echo '   ' TEST;
+	QUIET_TAR      = @echo '   ' TAR $@;
+	QUIET_DOC      = @echo '   ' DOC $@;
+	export V
+	export Q
+	export QUIET_GEN
+endif
+endif
+
+# These are all currently installed to $(bindir) but the hem-XXX scripts will
+# probably move to a libexec directory, eventually.
+SCRIPT_SH =  hem-bounce.sh hem-down.sh \
+             hem-info.sh hem-init.sh hem-list.sh \
+             hem-manage.sh hem-push-keys.sh hem-sh-setup.sh \
+             hem-status.sh hem-up.sh
+PROGRAM_SH = hem.sh
+SCRIPTS =    $(patsubst %.sh,%,$(SCRIPT_SH))
+PROGRAMS =   $(patsubst %.sh,%,$(PROGRAM_SH))
+SRCS =       $(SCRIPT_SH) $(PROGRAM_SH)
+AUX =        Makefile configure work-sh test-sh
+DOCFILES =   README INSTALL COPYING
+
+
+all:: $(SCRIPTS) $(PROGRAMS)
+
+# Build all hem-XXX scripts by substituting build time variables and
+#
+$(SCRIPTS) $(PROGRAMS): % : %.sh
+	$(QUIET_SH)$(RM) $@ $@+ && \
+	sed -e '1s|#!.*/sh|#!$(SHELL_PATH)|' \
+	    -e 's|@@HEM_VERSION@@|$(VERSION)|g' \
+	    -e 's|@@HEM_EXEC_DIR@@|$(libexecdir)|g' \
+	    $@.sh >$@+ && \
+	chmod +x $@+ && \
+	chmod -w $@+ && \
+	mv $@+ $@ && \
+	sh -n $@
+
+# ---- INSTALL TARGETS ----
+
+install: all
+	$(INSTALL_DIR) '$(DESTDIR)$(libexecdir)'
+	$(INSTALL_PROGRAM) $(SCRIPTS) '$(DESTDIR)$(libexecdir)'
+	$(INSTALL_DIR) '$(DESTDIR)$(bindir)'
+	$(INSTALL_PROGRAM) $(PROGRAMS) '$(DESTDIR)$(bindir)'
+	$(INSTALL_DIR) '$(DESTDIR)$(docdir)'
+	$(INSTALL_DATA) $(DOCFILES) '$(DESTDIR)$(docdir)'
+	$(MAKE) -C doc install-man
+
+uninstall:
+	$(RM) $(foreach f,$(SCRIPTS),$(DESTDIR)$(libexecdir)/$(f)) \
+	      $(foreach f,$(PROGRAMS),$(DESTDIR)$(bindir)/$(f)) \
+	      $(foreach f,$(DOCFILES),$(DESTDIR)$(docdir)/$(f))
+	-rmdir $(DESTDIR)/$(docdir)
+
+# ---- PACKAGING AND DIST TARGETS ----
+
+DISTNAME = $(TARNAME)-$(VERSION)
+
+MANSRC = doc/hem.1.txt \
+		 doc/hem_config.5.txt \
+		 doc/asciidoc.conf \
+		 doc/Makefile
+
+MANMAN = doc/hem.1 \
+		 doc/hem_config.1
+
+$(DISTNAME).tar.gz: $(SRCS) $(DOCFILES) $(AUX) manpages
+	$(Q)-rm -rf $(DISTNAME)
+	$(Q)-mkdir $(DISTNAME)
+	$(Q)ln $(SRCS) $(DOCFILES) $(AUX) $(DISTNAME)
+	$(Q)mkdir $(DISTNAME)/doc
+	$(Q)ln $(MANSRC) $(MANMAN) $(DISTNAME)/doc
+	$(QUIET_TAR)$(TAR) cf $(DISTNAME).tar $(DISTNAME)
+	$(Q)gzip -n -9 -f $(DISTNAME).tar
+	$(Q)rm -rf $(DISTNAME)
+
+$(DISTNAME).cksums: $(DISTNAME).tar.gz
+	$(QUIET_GEN)cksums $(DISTNAME).tar.gz > $@
+
+dist: $(DISTNAME).tar.gz $(DISTNAME).cksums
+
+release: $(DISTNAME).tar.gz $(DISTNAME).cksums
+	$(Q)ssh tomayko.com "mkdir -p /dist/hem"
+	$(Q)rsync -aP $(DISTNAME).tar.gz $(DISTNAME).cksums \
+	  tomayko.com:/dist/hem/
+
+# ---- TESTING ----
+
+test.out: $(SCRIPTS) $(PROGRAMS) test-sh
+	$(QUIET_TEST) sh test-sh
+
+test: test.out
+
+# ---- DOCS ----
+
+doc:
+	$(QUIET_DOC)$(MAKE) -C doc all
+
+sitedoc:
+	$(QUIET_DOC)$(MAKE) -C doc html
+
+manpages:
+	$(QUIET_DOC)$(MAKE) -C doc man
+
+# ---- MISC TARGETS ----
+
+# make all repeatedly (useful for development)
+auto:
+	@while true ; do \
+	  $(MAKE) test | grep -v 'Nothing to be done' ; \
+	  sleep 1 ; \
+	done
+
+clean:
+	$(Q)$(RM) $(SCRIPTS) $(PROGRAMS) $(patsubst %.sh,%+,$(SCRIPT_SH)) \
+	          test.out test.stdout test.stderr
+	$(Q)$(RM) -r test
+	$(Q)$(MAKE) -C doc clean
+
+distclean: clean
+	$(Q)$(RM) config.mak $(DISTNAME) $(DISTNAME).tar.gz \
+	          $(DISTNAME).cksums
+
+.PHONY : all clean dist install uninstall auto test doc
+
+FORCE:
+
+.SUFFIXES:
+
+# vim: set ts=8
