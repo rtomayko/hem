@@ -1,0 +1,43 @@
+HEM_CONFIG(5)
+=============
+Ryan Tomayko <r@tomayko.com>
+
+NAME
+----
+hem_config - Hem's global configuration file.
+
+SYNOPSIS
+--------
+*~/.hem/config*
+
+DESCRIPTION
+-----------
+The Hem configuration file is loaded when manlocal:hem[1] is invoked.
+
+CONFIGURATION VARIABLES
+-----------------------
+`log_to`='FILE'::
+	Hem writes log messages about its operations to 'FILE'. If the
+	`log_to` variable is set to an empty value, Hem will use the
+	man:syslog[1] facility. The default `log_to` value is
+	*~/.hem/log*.
+
+`run_dir`='DIR'::
+	Where to put pid files. This directory must be writable. If the
+	directory does not exist when hem is invoked, an attempt will be made
+	to create it. The default value is *~/.hem/run*.
+
+SEE ALSO
+--------
+manlocal:hem[1], man:syslog[1], man:ssh_config[5].
+
+AUTHOR
+------
+Written by http://tomayko.com/[Ryan Tomayko] <r@tomayko.com>
+
+COPYING
+-------
+Copyright \(C) 2008, Ryan Tomayko. Free use of this software is
+granted under the terms of the New and Simplified BSD License.
+
+// vim: tw=78 ts=8 sw=8 sts=0 noexpandtab

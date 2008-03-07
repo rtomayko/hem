@@ -10,23 +10,8 @@ monitors SSH connection upedness and automatically bounces downed connections
 
 *Hem* is *Free Software* covered by the
 http://opensource.org/licenses/bsd-license.php[New and Simplified BSD License].
-It was originally written, and is still maintained, by
+It was written originally, and is currently maintained, by
 http://tomayko.com[Ryan Tomayko].
-
-Documentation
--------------
-A comprehensive set of manual pages are installed with Hem and available
-here for ease of viewing:
-
-* The manlocal:hem[1] manpage is a good starting point.
-
-* Each of *Hem*'s sub-commands have manual pages of there own: manlocal:hem-init[1],
-  manlocal:hem-manage[1], manlocal:hem-status[1], manlocal:hem-info[1],
-  manlocal:hem-up[1], manlocal:hem-down[1], and manlocal:hem-bounce[1].
-
-* Finally, *Hem*'s global and connection profile configuration files are
-  documented in manlocal:hem_config[5] and manlocal:hem_profile[5],
-  respectively.
 
 Installation
 ------------
@@ -46,6 +31,21 @@ http://www.harding.motd.ca/autossh/[Carson Harding's `autossh`]
 
 Please read the link:install.html[INSTALL] file included with the distribution for
 installation and hacking instructions.
+
+Documentation
+-------------
+A comprehensive set of manual pages are installed with Hem and available
+here for ease of viewing:
+
+* The manlocal:hem[1] manpage is a good starting point.
+
+* Each of *Hem*'s sub-commands have manual pages of there own: manlocal:hem-init[1],
+  manlocal:hem-manage[1], manlocal:hem-status[1], manlocal:hem-info[1],
+  manlocal:hem-up[1], manlocal:hem-down[1], and manlocal:hem-bounce[1].
+
+* Finally, *Hem*'s global and connection profile configuration files are
+  documented in manlocal:hem_config[5] and manlocal:hem_profile[5],
+  respectively.
 
 See Also
 --------
