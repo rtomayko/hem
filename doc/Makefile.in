@@ -73,10 +73,10 @@ $(SITEHTMLFILES): xhtml11-article.conf
 $(MANHTMLFILES): xhtml11-manpage.conf
 
 install-man: $(MANFILES)
-	@-$(INSTALL_DIR) '$(DESTDIR)$(man1dir)'
-	@$(INSTALL_DATA) $(MAN1FILES) '$(DESTDIR)$(man1dir)'
-	@-$(INSTALL_DIR) '$(DESTDIR)$(man5dir)'
-	@$(INSTALL_DATA) $(MAN5FILES) '$(DESTDIR)$(man5dir)'
+	-$(INSTALL_DIR) '$(DESTDIR)$(man1dir)'
+	$(INSTALL_DATA) $(MAN1FILES) '$(DESTDIR)$(man1dir)'
+	-$(INSTALL_DIR) '$(DESTDIR)$(man5dir)'
+	$(INSTALL_DATA) $(MAN5FILES) '$(DESTDIR)$(man5dir)'
 
 clean:
 	$(Q)$(RM) -r $(HTMLFILES) $(XMLFILES) $(MANFILES)

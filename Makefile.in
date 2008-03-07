@@ -56,7 +56,7 @@ PROGRAM_SH = hem.sh
 SCRIPTS =    $(patsubst %.sh,%,$(SCRIPT_SH))
 PROGRAMS =   $(patsubst %.sh,%,$(PROGRAM_SH))
 SRCS =       $(SCRIPT_SH) $(PROGRAM_SH)
-AUX =        Makefile configure work-sh test-sh
+AUX =        Makefile.in configure configure.ac work-sh test-sh install-sh
 DOCFILES =   README INSTALL COPYING
 
 
@@ -99,10 +99,10 @@ DISTNAME = $(TARNAME)-$(VERSION)
 MANSRC = doc/hem.1.txt \
 		 doc/hem_config.5.txt \
 		 doc/asciidoc.conf \
-		 doc/Makefile
+		 doc/Makefile.in
 
 MANMAN = doc/hem.1 \
-		 doc/hem_config.1
+		 doc/hem_config.5
 
 $(DISTNAME).tar.gz: $(SRCS) $(DOCFILES) $(AUX) manpages
 	$(Q)-rm -rf $(DISTNAME)

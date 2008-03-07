@@ -14,14 +14,15 @@ to get the hem commands on your path:
 (You will need to source the work-sh script for each shell environment.)
 EOF
 
-if test ! -f $(dirname $0)/VERSION
+if test ! -f $(dirname $0)/hem.sh
 then
     echo "This doesn't look like a Hem working directory..."
 else
-    test -z "$(echo $PATH | grep -F "$(pwd)")" && {
+	HEM_EXEC="$(pwd)"
+    test -z "$(echo $PATH | grep -F "$HEM_EXEC")" && {
         PATH="$(pwd):$PATH"
         export PATH
-        echo "Hem $(cat VERSION) should now be active for the current shell environment."
+        echo "Hem should now be active for the current shell environment."
     } ||
     echo "$(pwd) already on PATH"
 fi
