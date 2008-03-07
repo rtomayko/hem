@@ -1,4 +1,4 @@
-AC_INIT([Hem], [0.3.2], [r@tomayko.com], [hem])
+AC_INIT([Hem], [0.3.3], [r@tomayko.com], [hem])
 AC_CONFIG_SRCDIR([README])
 
 AC_ARG_WITH([autossh],
