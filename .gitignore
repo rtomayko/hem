@@ -15,3 +15,8 @@ test.stderr
 test
 hem-manage
 hem-list
+Makefile
+config.log
+config.status
+conf22114.file
+autom4te.cache
