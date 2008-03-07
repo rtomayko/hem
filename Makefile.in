@@ -26,25 +26,12 @@ INSTALL = @INSTALL@
 INSTALL_DIR = $(INSTALL) -d -m 755
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
+SED = @SED@
 PERL = @PERL@
 SSH = @SSH@
 AUTOSSH = @AUTOSSH@
 
 # ---- END OF CONFIGURATION ----
-
-ifneq ($(findstring $(MAKEFLAGS),s),s)
-ifndef V
-	Q              = @
-	QUIET_SH       = @echo '   ' SH $@;
-	QUIET_GEN      = @echo '   ' GEN $@;
-	QUIET_TEST     = @echo '   ' TEST;
-	QUIET_TAR      = @echo '   ' TAR $@;
-	QUIET_DOC      = @echo '   ' DOC $@;
-	export V
-	export Q
-	export QUIET_GEN
-endif
-endif
 
 # These are all currently installed to $(bindir) but the hem-XXX scripts will
 # probably move to a libexec directory, eventually.
@@ -65,15 +52,15 @@ all:: $(SCRIPTS) $(PROGRAMS)
 # Build all hem-XXX scripts by substituting build time variables and
 #
 $(SCRIPTS) $(PROGRAMS): % : %.sh
-	$(QUIET_SH)$(RM) $@ $@+ && \
-	sed -e '1s|#!.*/sh|#!$(SHELL_PATH)|' \
+	$(RM) $@ $@+ && \
+	$(SED) -e '1s|#!.*/sh|#!$(SHELL_PATH)|' \
 	    -e 's|@@HEM_VERSION@@|$(VERSION)|g' \
 	    -e 's|@@HEM_EXEC_DIR@@|$(libexecdir)|g' \
 	    $@.sh >$@+ && \
 	chmod +x $@+ && \
 	chmod -w $@+ && \
 	mv $@+ $@ && \
-	sh -n $@
+	$(SHELL_PATH) -n $@
 
 # ---- INSTALL TARGETS ----
 
@@ -105,63 +92,73 @@ MANMAN = doc/hem.1 \
 		 doc/hem_config.5
 
 $(DISTNAME).tar.gz: $(SRCS) $(DOCFILES) $(AUX) manpages
-	$(Q)-rm -rf $(DISTNAME)
-	$(Q)-mkdir $(DISTNAME)
-	$(Q)ln $(SRCS) $(DOCFILES) $(AUX) $(DISTNAME)
-	$(Q)mkdir $(DISTNAME)/doc
-	$(Q)ln $(MANSRC) $(MANMAN) $(DISTNAME)/doc
-	$(QUIET_TAR)$(TAR) cf $(DISTNAME).tar $(DISTNAME)
-	$(Q)gzip -n -9 -f $(DISTNAME).tar
-	$(Q)rm -rf $(DISTNAME)
+	-rm -rf $(DISTNAME)
+	-mkdir $(DISTNAME)
+	ln $(SRCS) $(DOCFILES) $(AUX) $(DISTNAME)
+	mkdir $(DISTNAME)/doc
+	ln $(MANSRC) $(MANMAN) $(DISTNAME)/doc
+	$(TAR) cf $(DISTNAME).tar $(DISTNAME)
+	gzip -n -9 -f $(DISTNAME).tar
+	rm -rf $(DISTNAME)
 
 $(DISTNAME).cksums: $(DISTNAME).tar.gz
-	$(QUIET_GEN)cksums $(DISTNAME).tar.gz > $@
+	cksums $(DISTNAME).tar.gz > $@
 
 dist: $(DISTNAME).tar.gz $(DISTNAME).cksums
 
 release: $(DISTNAME).tar.gz $(DISTNAME).cksums
-	$(Q)ssh tomayko.com "mkdir -p /dist/hem"
-	$(Q)rsync -aP $(DISTNAME).tar.gz $(DISTNAME).cksums \
+	ssh tomayko.com "mkdir -p /dist/hem"
+	rsync -aP $(DISTNAME).tar.gz $(DISTNAME).cksums \
 	  tomayko.com:/dist/hem/
 
 # ---- TESTING ----
 
 test.out: $(SCRIPTS) $(PROGRAMS) test-sh
-	$(QUIET_TEST) sh test-sh
+	sh test-sh
 
 test: test.out
 
 # ---- DOCS ----
 
 doc:
-	$(QUIET_DOC)$(MAKE) -C doc all
+	$(MAKE) -C doc all
 
 sitedoc:
-	$(QUIET_DOC)$(MAKE) -C doc html
+	$(MAKE) -C doc html
 
 manpages:
-	$(QUIET_DOC)$(MAKE) -C doc man
+	$(MAKE) -C doc man
+
+publish:
+	$(MAKE) -C doc publish
 
 # ---- MISC TARGETS ----
 
 # make all repeatedly (useful for development)
 auto:
 	@while true ; do \
-	  $(MAKE) test | grep -v 'Nothing to be done' ; \
+	  $(MAKE) -s test | grep -v 'Nothing to be done' ; \
 	  sleep 1 ; \
 	done
 
 clean:
-	$(Q)$(RM) $(SCRIPTS) $(PROGRAMS) $(patsubst %.sh,%+,$(SCRIPT_SH)) \
-	          test.out test.stdout test.stderr
-	$(Q)$(RM) -r test
-	$(Q)$(MAKE) -C doc clean
+	$(RM) $(SCRIPTS)
+	$(RM) $(PROGRAMS)
+	$(RM) $(patsubst %.sh,%+,$(SCRIPT_SH))
+	$(RM) test.out test.stdout test.stderr
+	$(RM) -r test
+	$(MAKE) -C doc clean
+	test -f autossh/Makefile && $(MAKE) -C autossh clean || true
 
-distclean: clean
-	$(Q)$(RM) config.mak $(DISTNAME) $(DISTNAME).tar.gz \
-	          $(DISTNAME).cksums
+pristine: clean
+	$(MAKE) -C doc pristine
+	test -f autossh/Makefile && $(MAKE) -C autossh distclean || true
+	$(RM) $(TARNAME)-*.tar.gz $(TARNAME)-*.cksums
+	$(RM) Makefile doc/Makefile
+	$(RM) config.status config.log config.cache conf*.file
+	$(RM) -r autom4te.cache conf*.dir
 
-.PHONY : all clean dist install uninstall auto test doc
+.PHONY : all clean pristine dist install uninstall auto test doc
 
 FORCE:
 
