@@ -83,5 +83,5 @@ EOF
 if test -n "$editconfig" ; then
 	editor "$HEM_CONFIG"
 else
-	info "edit configuration in: $(tildize "$configfile")"
+	info "edit configuration in: $(tildize "$HEM_CONFIG")"
 fi
