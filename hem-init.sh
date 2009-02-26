@@ -53,6 +53,10 @@ if [ -f "$HEM_CONFIG" ]; then
 	info "backed up $(tildize "$HEM_CONFIG") to $(basename "$HEM_CONFIG")~"
 fi
 
+# Set log_file to default if not set
+test -z "$log_to" &&
+log_to="$base_dir/log"
+
 # Create template config file
 mkdir -p "$base_dir"
 mkdir -p "$base_dir/profile"

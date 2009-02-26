@@ -55,7 +55,6 @@ echo "$monitor_port" > "$statefile"
 AUTOSSH_DEBUG=$front
 AUTOSSH_GATETIME=30
 AUTOSSH_LOGLEVEL=5
-AUTOSSH_LOGFILE="$log_to"
 AUTOSSH_MAXSTART=-1
 AUTOSSH_MESSAGE=
 #AUTOSSH_PATH="$ssh_command"
@@ -64,9 +63,14 @@ AUTOSSH_POLL=${poll_time:-600}
 AUTOSSH_FIRST_POLL=$AUTOSSH_POLL
 AUTOSSH_PORT=${monitor_port:-0}
 
+# only set the log file if the log_to variable is set
+test -n "$log_to" &&
+AUTOSSH_LOGFILE="$log_to"
+
 # export autossh environment
 export AUTOSSH_DEBUG AUTOSSH_GATETIME AUTOSSH_LOGLEVEL AUTOSSH_LOGFILE \
 	AUTOSSH_PIDFILE AUTOSSH_POLL AUTOSSH_FIRST_POLL AUTOSSH_PORT
+
 
 # XXX: there's some oddness with setting the AUTOSSH_PORT environment variable
 #      to zero that seems to stop autossh from coming up.
