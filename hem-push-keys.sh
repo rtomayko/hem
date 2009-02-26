@@ -10,13 +10,19 @@ profile_required "$@"
 
 # TODO: which public key to use should be configurable on a global
 #       or profile level.
-public_key_file=${public_key_file:-~/.ssh/id_dsa.pub}
+if test -z "$public_key_file" ; then
+	if test -r ~/.ssh/id_dsa.pub ; then
+		public_key_file=~/.ssh/id_dsa.pub
+	elif test -r ~/.ssh/id_rsa.pub ; then
+		public_key_file=~/.ssh/id_rsa.pub
+	fi
+fi
 
 # check that we have a public key and kick off ssh-keygen if not.
 # TODO: autogenerating keys should be an option.
 if ! test -r "$public_key_file"; then
 	info "public key not found ... generating a new one."
-	ssh-keygen -t dsa
+	ssh-keygen
 fi
 
 info "authorizing on $remote ($(tildize "$public_key_file"))"
